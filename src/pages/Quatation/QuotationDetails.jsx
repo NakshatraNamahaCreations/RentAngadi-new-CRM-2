@@ -55,16 +55,10 @@ const formatDateToDDMMYYYY = (date) => {
 };
 
 const QuotationDetails = () => {
-  const location = useLocation();
-
-  const savedQuotation = location.state?.quotation;
-  const savedItems = location.state?.items || [];
-  const savedProductDates = location.state?.productDates || {};
-
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [quotation, setQuotation] = useState(savedQuotation || null);
+  const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -82,8 +76,8 @@ const QuotationDetails = () => {
   const [getPayment, setGetPayment] = useState("");
   const [editIdx, setEditIdx] = useState(null);
   const [editQty, setEditQty] = useState(1);
-  const [productDates, setProductDates] = useState(savedProductDates || {});
-  const [items, setItems] = useState(savedItems || []);
+  const [productDates, setProductDates] = useState({});
+  const [items, setItems] = useState([]);
 
   // const [grandTotal, setGrandTotal] = useState(0)
 
@@ -116,12 +110,7 @@ const QuotationDetails = () => {
       }
       setLoading(false);
     };
-    if (!quotation) {
-      console.log("no saved. fetching quotation");
-      fetchQuotation();
-    }else{
-      setLoading(false)
-    }
+    fetchQuotation();
   }, [id]);
 
   useEffect(() => {

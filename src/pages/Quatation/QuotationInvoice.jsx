@@ -60,12 +60,14 @@ const QuotationInvoice = () => {
       <div ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 8 }}>
         {/* Header */}
         <h2 style={{ fontWeight: 700, marginBottom: 8 }}>
-          Quotation Invoice #{quotation.quoteId}
+          Quotation
         </h2>
         {/* Download Button */}
-        <button className="btn btn-primary mt-4" onClick={handleDownloadPDF}>
-          Download PDF
-        </button>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button className="btn btn-primary mt-4" onClick={handleDownloadPDF}>
+            Download PDF
+          </button>
+        </div>
         <div style={{ marginBottom: 16 }}>
           <div>
             <strong>Client Name:</strong> {quotation.clientName}
@@ -82,9 +84,9 @@ const QuotationInvoice = () => {
           <div>
             <strong>Address:</strong> {quotation.address}
           </div>
-          <div>
+          {/* <div>
             <strong>Status:</strong> {quotation.status}
-          </div>
+          </div> */}
         </div>
 
         {/* Product Table */}

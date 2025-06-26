@@ -292,18 +292,6 @@ const Header = () => {
   }, [location.pathname]);
 
   const handleBackClick = () => {
-        // Check if on QuotationInvoice page
-    if (location.pathname.startsWith("/quotation/invoice/")) {
-      // Get state from current location
-      const { quotation, items, productDates } = location.state || {};
-      // Go back to QuotationDetails with state
-      if (quotation && quotation._id) {
-        navigate(`/quotation-details/${quotation._id}`, {
-          state: { quotation, items, productDates },
-        });
-        return;
-      }
-    }
     if (window.history.length > 1) {
       navigate(-1);
     } else {
