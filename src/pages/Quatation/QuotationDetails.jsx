@@ -32,7 +32,7 @@ import { toast } from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import DatePicker from "react-datepicker";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const parseDate = (str) => {
   // console.log("parseDate str error: ", str)
@@ -55,10 +55,16 @@ const formatDateToDDMMYYYY = (date) => {
 };
 
 const QuotationDetails = () => {
+  const location = useLocation();
+
+  const savedQuotation = location.state?.quotation;
+  const savedItems = location.state?.items || [];
+  const savedProductDates = location.state?.productDates || {};
+
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [quotation, setQuotation] = useState(null);
+  const [quotation, setQuotation] = useState(savedQuotation || null);
   const [loading, setLoading] = useState(true);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -76,8 +82,8 @@ const QuotationDetails = () => {
   const [getPayment, setGetPayment] = useState("");
   const [editIdx, setEditIdx] = useState(null);
   const [editQty, setEditQty] = useState(1);
-  const [productDates, setProductDates] = useState({});
-  const [items, setItems] = useState([]);
+  const [productDates, setProductDates] = useState(savedProductDates || {});
+  const [items, setItems] = useState(savedItems || []);
 
   // const [grandTotal, setGrandTotal] = useState(0)
 
@@ -110,7 +116,12 @@ const QuotationDetails = () => {
       }
       setLoading(false);
     };
-    fetchQuotation();
+    if (!quotation) {
+      console.log("no saved. fetching quotation");
+      fetchQuotation();
+    }else{
+      setLoading(false)
+    }
   }, [id]);
 
   useEffect(() => {
@@ -164,7 +175,7 @@ const QuotationDetails = () => {
                 available: prod.availableStock > 0 ? prod.availableStock : 0,
                 quoteDate,
                 endDate,
-                quantity: prod.quantity,
+                quantity: prod.quantity || prod.qty,
                 total: prod.total,
                 productSlot: quotation?.quoteTime
               };
@@ -1037,7 +1048,7 @@ const QuotationDetails = () => {
           onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
           onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
           // onClick={handleDownloadPDF}
-          onClick={() => navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation,items,productDates } })}
+          onClick={() => navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } })}
         >
           Download as PDF
         </Button>

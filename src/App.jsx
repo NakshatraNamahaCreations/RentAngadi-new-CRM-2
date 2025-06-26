@@ -31,6 +31,7 @@ import Invoice from "./pages/Orders/Invoice.jsx";
 import ProductDetails from "./pages/Product/ProductDetails.jsx";
 import QuotationDetails from "./pages/Quatation/QuotationDetails.jsx";
 import ProductReports from "./pages/reports/ProductReports.jsx";
+import QuotationInvoice from "./pages/Quatation/QuotationInvoice.jsx";
 
 function App() {
   // Use state to trigger re-render on login/logout
@@ -88,6 +89,7 @@ function App() {
             <Route path="/product-reports" element={<ProductReports />} />
             {/* Redirect /login to dashboard if already logged in */}
             <Route path="/login" element={<Navigate to="/" />} />
+            <Route path="/quotation/invoice/:id" element={<QuotationInvoice/>} />
           </Routes>
         </Layout>
       ) : (

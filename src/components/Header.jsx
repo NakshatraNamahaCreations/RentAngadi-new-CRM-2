@@ -276,6 +276,8 @@ const Header = () => {
       setCurrentTab("Quotation");
     } else if (matchPath("/quotation-details/:id", path)) {
       setCurrentTab("Quotation Details");
+    } else if (matchPath("/quotation/invoice/:id", path)) {
+      setCurrentTab("Quotation Invoice");
     } else if (matchPath("/payment-report", path)) {
       setCurrentTab("Payment Report");
     } else if (matchPath("/refurbihsment-report", path)) {
@@ -290,6 +292,18 @@ const Header = () => {
   }, [location.pathname]);
 
   const handleBackClick = () => {
+        // Check if on QuotationInvoice page
+    if (location.pathname.startsWith("/quotation/invoice/")) {
+      // Get state from current location
+      const { quotation, items, productDates } = location.state || {};
+      // Go back to QuotationDetails with state
+      if (quotation && quotation._id) {
+        navigate(`/quotation-details/${quotation._id}`, {
+          state: { quotation, items, productDates },
+        });
+        return;
+      }
+    }
     if (window.history.length > 1) {
       navigate(-1);
     } else {

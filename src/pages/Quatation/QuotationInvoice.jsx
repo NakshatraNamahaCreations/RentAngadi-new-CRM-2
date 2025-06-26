@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import html2pdf from "html2pdf.js";
+import { ImageApiURL } from "../../api";
 
 const QuotationInvoice = () => {
   const location = useLocation();
@@ -8,9 +9,10 @@ const QuotationInvoice = () => {
   const invoiceRef = useRef();
 
   // Get quotation data from navigation state
+  console.log("Quotation data:", location.state);
   const quotation = location.state?.quotation;
   const items = location.state?.items || [];
-  const productDates=location.state?.productDates || {};
+  const productDates = location.state?.productDates || {};
 
 
   if (!quotation) {
@@ -92,10 +94,10 @@ const QuotationInvoice = () => {
               <th style={{ border: "1px solid #ccc", padding: 8 }}>Product</th>
               <th style={{ border: "1px solid #ccc", padding: 8 }}>Slot</th>
               <th style={{ border: "1px solid #ccc", padding: 8 }}>Image</th>
-              <th style={{ border: "1px solid #ccc", padding: 8 }}>Price</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Price(Rs)</th>
               <th style={{ border: "1px solid #ccc", padding: 8 }}>Qty</th>
               <th style={{ border: "1px solid #ccc", padding: 8 }}>Days</th>
-              <th style={{ border: "1px solid #ccc", padding: 8 }}>Total</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Total(Rs)</th>
             </tr>
           </thead>
           <tbody>
@@ -103,16 +105,16 @@ const QuotationInvoice = () => {
               <tr key={idx}>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{product.productName}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{productDates[product.productId]?.productSlot ||
-                          quotation?.quoteTime}
+                  quotation?.quoteTime}
                   {"    "}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>
                   {product.image ? (
                     <img
                       src={
-                          product.image
-                            ? `https://api.rentangadi.in/product/${product.image}`
-                            : "https://cdn-icons-png.flaticon.com/512/1532/1532801.png"
-                        }
+                        product.image
+                          ? `${ImageApiURL}/product/${product.image}`
+                          : "https://cdn-icons-png.flaticon.com/512/1532/1532801.png"
+                      }
                       alt={product.productName}
                       style={{ width: 50, height: 50, objectFit: "contain" }}
                       crossOrigin="anonymous"
@@ -122,12 +124,12 @@ const QuotationInvoice = () => {
                   )}
                 </td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>
-                  Rs. {product.price}
+                  {product.pricePerUnit}
                 </td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{product.quantity}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{product.days}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>
-                  Rs. {(product.price * product.quantity * (product.days || 1)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {(product.pricePerUnit * product.quantity * (product.days || 1)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
               </tr>
             ))}
