@@ -261,6 +261,11 @@ const Sidebars = () => {
       path: "/product-reports",
       icon: FaChartLine,
     },
+    {
+      name: "Client Reports",
+      path: "/client-reports",
+      icon: FaChartLine,
+    },
   ];
 
   const isActiveLink = (path) => {

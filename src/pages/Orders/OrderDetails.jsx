@@ -82,6 +82,17 @@ const OrderDetails = () => {
   const pdfRef = useRef();
   const [pdfMode, setPdfMode] = useState(false);
   const [productDays, setProductDays] = useState({});
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    status: "Online",
+    amount: 0,
+    mode: "",
+    comments: "",
+    date: new Date().toLocaleDateString("en-GB").split("/").join("-"),
+  });
+
+  const handleShowGenerateModal = () => setShowGenerateModal(true);
+  const handleCloseGenerateModal = () => setShowGenerateModal(false);
 
   const handleRefurbishment = async () => {
     try {
@@ -849,6 +860,38 @@ const OrderDetails = () => {
     }, 300); // wait to let UI re-render without unnecessary columns
   };
 
+  const handleAddPayment = async () => {
+    try {
+      // First, make the API call to fetch payment data
+      const orderDetails = {
+        quotationId: order?.quoteId,
+        totalAmount: order?.GrandTotal,
+        advancedAmount: paymentData.amount,
+        paymentMode: paymentData.status, // Send selected payment mode
+        paymentRemarks:
+          paymentData.status === "Offline" ? "cash" : paymentData.mode,
+        comment: paymentData.comments,
+        status: "Completed",
+      };
+
+      // Make the POST request to add payment
+      const response = await axios.post(`${ApiURL}/payment/`, orderDetails);
+
+      // // If the API call is successful, update the payment data state
+      if (response.status === 200) {
+        console.log("payment successful: ", response.data);
+        toast.success("payment added successfully!");
+        // setGetPayment(response.data);
+      }
+      console.log("payment details: ", orderDetails);
+    } catch (error) {
+      console.error("Error fetching payment data:", error);
+      // Optionally handle any errors that occur during the API request
+    } finally {
+      handleCloseGenerateModal();
+    }
+  };
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
@@ -1293,16 +1336,28 @@ const OrderDetails = () => {
                   Refurbishment Invoice
                 </Button>
                 <Button
+                  variant="primary"
+                  size="sm"
+                  style={{ fontSize: 13, fontWeight: 600 }}
+                  onClick={handleShowGenerateModal}
+                  disabled={order && order.orderStatus === "cancelled"}
+                >
+                  Pay Amount
+                </Button>
+                <Button
                   variant="danger"
                   size="sm"
                   style={{ fontSize: 13, fontWeight: 600 }}
                   onClick={handleCancelOrder}
                   disabled={order && order.orderStatus === "cancelled"}
+                  className="ml-auto"
                 >
                   Cancel Order
                 </Button>
               </div>
             )}
+
+
           </Card.Body>
         </Card>
 
@@ -1614,6 +1669,136 @@ const OrderDetails = () => {
               onClick={handleRefurbishment}
             >
               Submit
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal show={showGenerateModal} onHide={handleCloseGenerateModal} centered>
+          <Modal.Header style={{ borderBottom: "none", padding: "20px 20px 0" }}>
+            <Modal.Title style={{ fontWeight: "600", color: "#2c3e50" }}>
+              Payment
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ padding: "20px" }}>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                  Payment
+                </Form.Label>
+                <div>
+                  <Form.Check
+                    inline
+                    label="Offline"
+                    type="checkbox"
+                    checked={paymentData.status === "Offline"}
+                    onChange={() => setPaymentData((prev) => ({ ...prev, status: "Offline" }))}
+                    style={{ marginRight: "20px" }}
+                  />
+                  <Form.Check
+                    inline
+                    label="Online"
+                    type="checkbox"
+                    checked={paymentData.status === "Online"}
+                    onChange={() => setPaymentData((prev) => ({ ...prev, status: "Online" }))}
+                  />
+                </div>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                  Amount
+                </Form.Label>
+                <div className="d-flex align-items-center">
+                  <span
+                    style={{
+                      marginRight: "10px",
+                      fontSize: "1.2rem",
+                      color: "#34495e",
+                    }}
+                  >
+                    ₹
+                  </span>
+                  <Form.Control
+                    type="number"
+                    name="amount"
+                    value={paymentData.amount}
+                    max={order?.GrandTotal}
+                    onChange={(e) => setPaymentData((prev) => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0"
+                    style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                  />
+                </div>
+              </Form.Group>
+              {paymentData.status !== "Offline" && (
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                    Payment Mode
+                  </Form.Label>
+                  <Form.Select
+                    name="mode"
+                    value={paymentData.mode}
+                    onChange={(e) => setPaymentData((prev) => ({ ...prev, mode: e.target.value }))}
+                    style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                  >
+                    <option value="">Select Payment Mode</option>
+                    <option value="Googlepay">Googlepay</option>
+                    <option value="Phonepay">Phonepay</option>
+                    <option value="Paytm">Paytm</option>
+                    <option value="UPI">UPI</option>
+                  </Form.Select>
+                </Form.Group>
+              )}
+              <Form.Group className="mb-3">
+                <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                  Comments
+                </Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  name="comments"
+                  value={paymentData.comments}
+                  onChange={(e) => setPaymentData((prev) => ({ ...prev, comments: e.target.value }))}
+                  placeholder="Add any comments or remarks"
+                  style={{
+                    borderRadius: "6px",
+                    borderColor: "#e0e0e0",
+                    resize: "none",
+                  }}
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer style={{ borderTop: "none", padding: "0 20px 20px" }}>
+            <Button
+              style={{
+                background: "linear-gradient(45deg, #27ae60, #2ecc71)",
+                border: "none",
+                borderRadius: "8px",
+                padding: "6px 10px",
+                fontWeight: "500",
+                transition: "transform 0.2s",
+                width: "100px",
+              }}
+              className="btn-sm"
+              onClick={() => {
+                // TODO: Implement payment submission logic here
+                handleAddPayment();
+              }}
+            >
+              Add
+            </Button>
+            <Button
+              style={{
+                background: "linear-gradient(45deg, #2980b9, #3498db)",
+                border: "none",
+                borderRadius: "8px",
+                padding: "6px 20px",
+                fontWeight: "500",
+                transition: "transform 0.2s",
+              }}
+              className="btn-sm"
+              onClick={handleCloseGenerateModal}
+            >
+              Close
             </Button>
           </Modal.Footer>
         </Modal>

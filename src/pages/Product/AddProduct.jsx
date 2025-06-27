@@ -27,6 +27,7 @@ const AddProduct = () => {
     material: "",
     description: "",
     productIcon: null,
+    repairCount: 0,
   });
 
   const [iconPreview, setIconPreview] = useState(null);
@@ -102,6 +103,7 @@ const AddProduct = () => {
           material: p.Material || "",
           description: p.ProductDesc || "",
           productIcon: p.ProductIcon || null, // Use existing icon if available
+          repairCount: p.repairCount || 0,
         });
         if (p.ProductIcon) {
           setIconPreview(`${ImageApiURL}/product/${p.ProductIcon}`);
@@ -229,6 +231,7 @@ const AddProduct = () => {
     formData.append("Color", productData.color);
     formData.append("qty", productData.quantity);
     formData.append("minqty", productData.minQuantity);
+    formData.append("repairCount", productData.repairCount); // <-- Add this line
 
     // Only append icon if new file selected or adding
     if (productData.productIcon) {
@@ -285,6 +288,7 @@ const AddProduct = () => {
           material: "",
           description: "",
           productIcon: null,
+          repairCount: "", // <-- Add this line
         });
         setIconPreview(null);
         setTimeout(() => navigate("/product-management"), 1000);
@@ -467,6 +471,22 @@ const AddProduct = () => {
                 />
               </Col>
             </Row>
+            <Row className="mb-3">
+              <Col md={4}>
+                <Form.Label style={{ fontSize: 14 }}>
+                  Repair Count
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  name="repairCount"
+                  value={productData.repairCount}
+                  onChange={handleChange}
+                  className="rounded-3 shadow-sm"
+                  style={{ fontSize: 14 }}
+                  min={0}
+                />
+              </Col>
+            </Row>
 
             {/* Color + Material */}
             <Row className="mb-3">
@@ -497,7 +517,7 @@ const AddProduct = () => {
             {/* Description */}
             <Form.Group className="mb-3">
               <Form.Label style={{ fontSize: 14 }}>
-                Product Description 
+                Product Description
               </Form.Label>
               <Form.Control
                 as="textarea"
@@ -528,21 +548,21 @@ const AddProduct = () => {
                 />
                 <FaUpload style={{ fontSize: "18px", color: "#323D4F" }} />
               </div>
-              {(iconPreview || 
+              {(iconPreview ||
                 (isEditMode && !iconPreview && productData.productIcon === null && iconPreview !== null)) && (
-                <div className="mt-3">
-                  <img
-                    src={iconPreview}
-                    alt="Preview"
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
-              )}
+                  <div className="mt-3">
+                    <img
+                      src={iconPreview}
+                      alt="Preview"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+                )}
             </Form.Group>
 
             {/* Add/Update Product Button */}
@@ -563,8 +583,8 @@ const AddProduct = () => {
                   ? "Updating..."
                   : "Adding..."
                 : isEditMode
-                ? "Update Product"
-                : "Add Product"}
+                  ? "Update Product"
+                  : "Add Product"}
             </Button>
 
             {/* Success Message */}

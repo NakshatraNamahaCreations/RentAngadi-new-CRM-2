@@ -10,7 +10,7 @@ import {
 } from "react-bootstrap";
 import axios from "axios";
 import Select from "react-select"; // Import react-select
-import { ApiURL } from "../../api";
+import { ApiURL, ImageApiURL } from "../../api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
@@ -27,11 +27,16 @@ const InventoryProduct = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(`${ApiURL}/product/getProducts`);
+        console.log("product: ", response.data.Product);
         const productOptions = response.data.Product.map((product) => ({
           value: product._id,
           label: product.ProductName,
+          image: product.ProductIcon,
         }));
-        setProducts(productOptions);
+        setProducts([
+          { value: "ALL_PRODUCTS", label: "All Products" },
+          ...productOptions,
+        ]);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -42,11 +47,22 @@ const InventoryProduct = () => {
 
   // Handle product selection
   const handleProductSelect = (selectedOptions) => {
-    setSelectedProducts(
-      selectedOptions ? selectedOptions.map((option) => option.value) : []
-    );
+    if (!selectedOptions) {
+      setSelectedProducts([]);
+      return;
+    }
+    // If "All Products" is selected, select all except "All Products"
+    const isAllSelected = selectedOptions.some(opt => opt.value === "ALL_PRODUCTS");
+    if (isAllSelected) {
+      setSelectedProducts(
+        products
+          .filter((opt) => opt.value !== "ALL_PRODUCTS")
+          .map((opt) => opt.value)
+      );
+    } else {
+      setSelectedProducts(selectedOptions.map((option) => option.value));
+    }
   };
-
   // Handle fetching inventory based on selected products and dates
   const handleFetchInventory = async () => {
     if (!deliveryDate || !dismantleDate) {
@@ -62,6 +78,7 @@ const InventoryProduct = () => {
           products: selectedProducts.join(","),
         },
       });
+      console.log("inventory: ", response.data);
       setInventory(response.data.stock);
     } catch (error) {
       console.error("Error fetching inventory:", error);
@@ -117,13 +134,27 @@ const InventoryProduct = () => {
             <Select
               isMulti
               options={products}
-              value={products.filter((product) =>
-                selectedProducts.includes(product.value)
-              )}
+              value={
+                selectedProducts.length === products.length - 1 && products.length > 1
+                  ? products
+                  : products.filter((product) => selectedProducts.includes(product.value))
+              }
               onChange={handleProductSelect}
               placeholder="Select products"
               getOptionLabel={(e) => e.label}
               getOptionValue={(e) => e.value}
+              styles={{
+                valueContainer: (base) => ({
+                  ...base,
+                  maxHeight: 80,
+                  overflowY: "auto",
+                  flexWrap: "wrap",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+              }}
             />
           </Col>
         </Row>
@@ -147,6 +178,7 @@ const InventoryProduct = () => {
                 <thead>
                   <tr>
                     <th>Product Name</th>
+                    <th>Product Icon</th>
                     <th>Available Stock</th>
                     <th>Reserved Stock</th>
                     <th>Total Stock</th>
@@ -154,15 +186,30 @@ const InventoryProduct = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {inventory.map((item) => (
-                    <tr key={item.productId}>
-                      <td>{item.productName}</td>
-                      <td>{item.availableStock}</td>
-                      <td>{item.reservedStock}</td>
-                      <td>{item.totalStock}</td>
-                      <td>{item.price}</td>
-                    </tr>
-                  ))}
+                  {inventory.map((item) => {
+                    // Find the product in the products array to get the icon
+                    const productOption = products.find(p => p.value === item.productId);
+                    const icon = productOption?.image;
+                    return (
+                      <tr key={item.productId}>
+                        <td>{item.productName}</td>
+                        <td>
+                          {icon && (
+                            <img
+                              src={`${ImageApiURL}/product/${icon}`}
+                              alt={item.productName}
+                              style={{ width: "64px", height: "32px", marginRight: 8, objectFit: "contain" }}
+                            />
+                          )}
+
+                        </td>
+                        <td>{item.availableStock}</td>
+                        <td>{item.reservedStock}</td>
+                        <td>{item.totalStock}</td>
+                        <td>{item.price}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </Col>

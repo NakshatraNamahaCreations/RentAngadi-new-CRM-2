@@ -79,10 +79,10 @@ const QuotationInvoice = () => {
             <strong>Executive Name:</strong> {quotation.executivename}
           </div>
           <div>
-            <strong>Venue:</strong> {quotation.placeaddress}
+            <strong>Client address:</strong> {quotation.placeaddress}
           </div>
           <div>
-            <strong>Address:</strong> {quotation.address}
+            <strong>Venue Address:</strong> {quotation.address}
           </div>
           {/* <div>
             <strong>Status:</strong> {quotation.status}
