@@ -11,8 +11,8 @@ const ClientReports = () => {
     const [clients, setClients] = useState([]);
     const [clientMap, setClientMap] = useState({}); 
     const [selectedClients, setSelectedClients] = useState([]);
-    const [deliveryDate, setDeliveryDate] = useState('Fri Jun 01 2025 00:00:00 GMT+0530 (India Standard Time)');
-    const [dismantleDate, setDismantleDate] = useState('Fri Aug 20 2025 00:00:00 GMT+0530 (India Standard Time)');
+    const [deliveryDate, setDeliveryDate] = useState(null);
+    const [dismantleDate, setDismantleDate] = useState(null);
     const [reportData, setReportData] = useState([]);
     const [loading, setLoading] = useState(false);
 

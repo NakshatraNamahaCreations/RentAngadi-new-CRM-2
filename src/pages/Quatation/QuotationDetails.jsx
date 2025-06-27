@@ -1470,10 +1470,10 @@ const QuotationDetails = () => {
               ₹{(quotation.adjustments || quotation.roundOff || 0).toFixed(2)}
             </span>
           </div> */}
-          <div className="d-flex justify-content-between mb-2">
+          {quotation?.GST != 0 && <div className="d-flex justify-content-between mb-2">
             <span>GST ({(quotation?.GST || 0).toFixed(2)}%):</span>
             <span>₹{(quotation?.gstAmt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
+          </div>}
           <hr style={{ borderColor: "#e0e0e0" }} />
           <div
             className="d-flex justify-content-between"

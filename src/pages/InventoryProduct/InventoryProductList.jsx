@@ -79,7 +79,7 @@ const InventoryProduct = () => {
   // Handle fetching inventory based on selected products and dates
   const handleFetchInventory = async () => {
     if (!deliveryDate || !dismantleDate) {
-      alert("Please select both Delivery Date and Dismantle Date.");
+      alert("Please select both Start Date and End Date.");
       return;
     }
 
@@ -118,7 +118,7 @@ const InventoryProduct = () => {
           <Col md={4}>
             <Form.Group controlId="deliveryDate">
               <Form.Label style={{ fontSize: "14px" }}>
-                Delivery Date
+                Start Date
               </Form.Label>
               {/* <Form.Control
                 type="date"
@@ -140,7 +140,7 @@ const InventoryProduct = () => {
           <Col md={4}>
             <Form.Group controlId="dismantleDate">
               <Form.Label style={{ fontSize: "14px" }}>
-                Dismantle Date
+                End Date
               </Form.Label>
               <DatePicker
                 selected={dismantleDate} // Default to initial quoteDate

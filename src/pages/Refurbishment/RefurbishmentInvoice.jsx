@@ -285,7 +285,7 @@ const RefurbishmentInvoice = () => {
             <hr />
 
             {/* Shipping Info */}
-            <h6 className="fw-bold mb-3">Shipping Information</h6>
+            {/* <h6 className="fw-bold mb-3">Shipping Information</h6>
             <Row className="text-muted" style={{ fontSize: "13px" }}>
               <Col>
                 <strong>Shipping Address:</strong>
@@ -295,7 +295,7 @@ const RefurbishmentInvoice = () => {
                 <strong>Floor Manager:</strong>
                 <div>{invoiceData.floorManager || "N/A"}</div>
               </Col>
-            </Row>
+            </Row> */}
           </Card.Body>
         </Card>
       </div>

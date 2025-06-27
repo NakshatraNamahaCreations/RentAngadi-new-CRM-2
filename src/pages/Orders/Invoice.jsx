@@ -60,6 +60,7 @@ const Invoice = () => {
   const items = order.slots.flatMap((slot) => slot.products) || [];
 
   const discount = Number(order?.discount || 0);
+  // const discount = 0
   const transport = Number(order?.transportcharge || 0);
   const manpower = Number(order?.labourecharge || 0);
   const gst = Number(order?.GST || 0);
@@ -103,33 +104,33 @@ const Invoice = () => {
   };
 
   // Function to handle PDF download with proper margins
-const handleDownloadPDF = async () => {
-  const element = invoiceRef.current;
+  const handleDownloadPDF = async () => {
+    const element = invoiceRef.current;
 
-  // Wait for all images inside the invoice to load
-  const images = element.querySelectorAll("img");
-  const promises = Array.from(images).map(
-    (img) =>
-      new Promise((resolve) => {
-        if (img.complete) {
-          resolve();
-        } else {
-          img.onload = resolve;
-          img.onerror = resolve;
-        }
-      })
-  );
-  await Promise.all(promises);
+    // Wait for all images inside the invoice to load
+    const images = element.querySelectorAll("img");
+    const promises = Array.from(images).map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete) {
+            resolve();
+          } else {
+            img.onload = resolve;
+            img.onerror = resolve;
+          }
+        })
+    );
+    await Promise.all(promises);
 
-  const opt = {
-    margin: [0.5, 0.5, 0.8, 0.5],
-    filename: `${invoice.invoiceNo || "invoice"}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true }, // useCORS is important!
-    jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+    const opt = {
+      margin: [0.5, 0.5, 0.8, 0.5],
+      filename: `${invoice.invoiceNo || "invoice"}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true }, // useCORS is important!
+      jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+    };
+    html2pdf().from(element).set(opt).save();
   };
-  html2pdf().from(element).set(opt).save();
-};
 
   return (
     <Container ref={invoiceRef} className="p-4 border" style={{ fontSize: "12px" }}>
@@ -324,6 +325,12 @@ const handleDownloadPDF = async () => {
             </td>
             <td>₹ {transport.toFixed(2)}</td>
           </tr>
+          <tr>
+            <td>
+              <b>{discount !== 0 ? "Total amount before discount" : "Total amount"}</b>
+            </td>
+            <td>₹ {(subtotal + manpower + transport).toFixed(2)}</td>
+          </tr>
           {discount !== 0 && (
             <tr>
               <td>
@@ -332,6 +339,12 @@ const handleDownloadPDF = async () => {
               <td>₹ {discountAmt.toFixed(2)}</td>
             </tr>
           )}
+          {discount !== 0 && <tr>
+            <td>
+              <b>Total amount after discount</b>
+            </td>
+            <td>₹ {(subtotal + manpower + transport - discountAmt).toFixed(2)}</td>
+          </tr>}
 
           <tr>
             <td>

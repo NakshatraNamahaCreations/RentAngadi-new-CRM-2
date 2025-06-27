@@ -103,8 +103,8 @@ const OrderDetails = () => {
 
       const payload = {
         products: addedRefProducts,
-        shippingAddress,
-        floorManager,
+        // shippingAddress,
+        // floorManager,
         status: "sent",
         orderId: order._id,
       };
@@ -1295,7 +1295,7 @@ const OrderDetails = () => {
                       <th>Product Name</th>
                       <th>Quantity</th>
                       <th>Price</th>
-                      <th>Damage Description</th>
+                      <th>Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1582,7 +1582,7 @@ const OrderDetails = () => {
                     />
                     <Form.Control
                       type="text"
-                      placeholder="Damage"
+                      placeholder="Description"
                       value={refDamage}
                       style={{ width: 100, fontSize: 13 }}
                       onChange={(e) => setRefDamage(e.target.value)}
@@ -1605,7 +1605,7 @@ const OrderDetails = () => {
                   </div>
                 </div>
               )}
-              <Form.Group className="mb-2">
+              {/* <Form.Group className="mb-2">
                 <Form.Label style={{ fontSize: 14, fontWeight: 500 }}>
                   Shipping Address <span style={{ color: "red" }}>*</span>
                 </Form.Label>
@@ -1626,7 +1626,7 @@ const OrderDetails = () => {
                   onChange={(e) => setFloorManager(e.target.value)}
                   placeholder="Enter floor manager"
                 />
-              </Form.Group>
+              </Form.Group> */}
               <div
                 style={{ fontWeight: 600, fontSize: 15, margin: "12px 0 6px" }}
               >
@@ -1643,7 +1643,7 @@ const OrderDetails = () => {
                       <th>Product</th>
                       <th>Qty</th>
                       <th>Price</th>
-                      <th>Damage</th>
+                      <th>Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1666,7 +1666,7 @@ const OrderDetails = () => {
             </Button>
             <Button
               variant="primary"
-              disabled={!shippingAddress || addedRefProducts.length === 0}
+              disabled={addedRefProducts.length === 0}
               onClick={handleRefurbishment}
             >
               Submit

@@ -246,7 +246,7 @@ const PaymentReport = () => {
                     <td style={{ fontSize: "12px" }}>
                       {payment.advancedAmount || payment.advanceAmount}
                     </td>
-                    <td style={{ fontSize: "12px" }}>{payment.paymentMode}</td>
+                    <td style={{ fontSize: "12px" }}>{payment.paymentRemarks}</td>
                     <td style={{ fontSize: "12px" }}>
                       {payment.paymentStatus || payment.status || "Confirm"}
                     </td>
