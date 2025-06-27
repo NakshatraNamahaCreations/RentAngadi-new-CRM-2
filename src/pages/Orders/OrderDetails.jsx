@@ -881,6 +881,7 @@ const OrderDetails = () => {
       if (response.status === 200) {
         console.log("payment successful: ", response.data);
         toast.success("payment added successfully!");
+        window.location.reload();
         // setGetPayment(response.data);
       }
       console.log("payment details: ", orderDetails);
@@ -967,7 +968,7 @@ const OrderDetails = () => {
                 </div>
                 {/* )} */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
-                  <span style={labelStyle}>Place addr:</span>
+                  <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
               </Col>
@@ -1724,6 +1725,31 @@ const OrderDetails = () => {
                     max={order?.GrandTotal}
                     onChange={(e) => setPaymentData((prev) => ({ ...prev, amount: e.target.value }))}
                     placeholder="0"
+                    style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                  />
+                </div>
+                <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                  Amount already Paid
+                </Form.Label>
+                {console.log("payments: ", order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0))}
+                <div className="d-flex align-items-center">
+                  <span
+                    style={{
+                      marginRight: "10px",
+                      fontSize: "1.2rem",
+                      color: "#34495e",
+                    }}
+                  >
+                    ₹
+                  </span>
+                  <Form.Control
+                    type="number"
+                    name="amount"
+                    value={order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)}
+                    max={order?.GrandTotal}
+                    // onChange={(e) => setPaymentData((prev) => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0"
+                    disabled
                     style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
                   />
                 </div>

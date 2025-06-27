@@ -557,32 +557,35 @@ const AddNewEnquiry = () => {
                                 border: "1px solid #eee",
                               }}
                             >
-                              {filteredProducts.map((prod) => (
-                                <div
-                                  key={prod.id || prod._id}
-                                  className="d-flex align-items-center px-2 py-1"
-                                  style={{
-                                    cursor: "pointer",
-                                    borderBottom: "1px solid #f5f5f5",
-                                    fontSize: 13,
-                                  }}
-                                  onClick={() => handleSelectProduct(prod)}
-                                >
-                                  <img
-                                    src={`${ImageApiURL}/product/${prod?.ProductIcon}`}
-                                    alt={prod.ProductName}
+                              {filteredProducts
+                                .filter(prod =>
+                                  prod.ProductName.toLowerCase().includes(productSearch.toLowerCase()))
+                                .map((prod) => (
+                                  <div
+                                    key={prod.id || prod._id}
+                                    className="d-flex align-items-center px-2 py-1"
                                     style={{
-                                      width: 36,
-                                      height: 28,
-                                      objectFit: "cover",
-                                      borderRadius: 4,
-                                      marginRight: 10,
-                                      border: "1px solid #eee",
+                                      cursor: "pointer",
+                                      borderBottom: "1px solid #f5f5f5",
+                                      fontSize: 13,
                                     }}
-                                  />
-                                  <span>{prod.ProductName}</span>
-                                </div>
-                              ))}
+                                    onClick={() => handleSelectProduct(prod)}
+                                  >
+                                    <img
+                                      src={`${ImageApiURL}/product/${prod?.ProductIcon}`}
+                                      alt={prod.ProductName}
+                                      style={{
+                                        width: 36,
+                                        height: 28,
+                                        objectFit: "cover",
+                                        borderRadius: 4,
+                                        marginRight: 10,
+                                        border: "1px solid #eee",
+                                      }}
+                                    />
+                                    <span>{prod.ProductName}</span>
+                                  </div>
+                                ))}
                             </div>
                           )}
                       </div>

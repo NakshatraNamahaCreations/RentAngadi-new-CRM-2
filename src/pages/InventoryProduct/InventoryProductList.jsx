@@ -14,6 +14,19 @@ import { ApiURL, ImageApiURL } from "../../api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+
+const exportToExcel = (data, filename = 'InventoryData.xlsx') => {
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const file = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  saveAs(file, filename);
+};
+
 
 const InventoryProduct = () => {
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -83,6 +96,18 @@ const InventoryProduct = () => {
     } catch (error) {
       console.error("Error fetching inventory:", error);
     }
+  };
+
+  const handleExport = () => {
+    const dataToExport = inventory.map(item => ({
+      'Product Name': item.productName,
+      'Available Stock': item.availableStock,
+      'Blocked Stock': item.reservedStock,
+      'Total Stock': item.totalStock,
+      'Price': item.price
+    }));
+
+    exportToExcel(dataToExport);
   };
 
   return (
@@ -159,14 +184,22 @@ const InventoryProduct = () => {
           </Col>
         </Row>
 
-        <div className="w-25 d-flex justify-content-end">
+        <div className=" d-flex justify-content-end gap-2 mt-4">
           <Button
             variant="success"
             size="sm"
-            className="w-100"
+            // className="w-100"
             onClick={handleFetchInventory}
           >
             Fetch Filtered Inventory
+          </Button>
+          <Button
+            variant="success"
+            size="sm"
+            // className="w-100"
+            onClick={handleExport}
+          >
+            Download Excel
           </Button>
         </div>
 
@@ -180,7 +213,7 @@ const InventoryProduct = () => {
                     <th>Product Name</th>
                     <th>Product Icon</th>
                     <th>Available Stock</th>
-                    <th>Reserved Stock</th>
+                    <th>Blocked Stock</th>
                     <th>Total Stock</th>
                     <th>Price</th>
                   </tr>

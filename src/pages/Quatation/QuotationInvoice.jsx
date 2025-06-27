@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { ImageApiURL } from "../../api";
+import { Container, Row, Col, Table, Button } from "react-bootstrap";
 
 const QuotationInvoice = () => {
   const location = useLocation();
@@ -9,6 +10,7 @@ const QuotationInvoice = () => {
   const invoiceRef = useRef();
 
   const quotation = location.state?.quotation;
+  // quotation.discount = 0
   const items = location.state?.items || [];
   const productDates = location.state?.productDates || {};
 
@@ -23,22 +25,23 @@ const QuotationInvoice = () => {
     );
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity * (item.days || 1), 0);
+  // Calculate products total
+  const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
   const transport = Number(quotation.transportcharge || 0);
   const manpower = Number(quotation.labourecharge || 0);
+  const totalWithCharges = productsTotal + transport + manpower;
   const discountPercent = Number(quotation.discount || 0);
   const gstPercent = Number(quotation.GST || 0);
 
-  const afterCharges = subtotal + transport + manpower;
-  const discountAmt = afterCharges * (discountPercent / 100);
-  const afterDiscount = afterCharges - discountAmt;
-  const gstAmt = afterDiscount * (gstPercent / 100);
-  const grandTotal = Math.round(afterDiscount + gstAmt);
+  const discountAmt = discountPercent ? (discountPercent / 100 * totalWithCharges) : 0;
+  const afterDiscount = totalWithCharges - discountAmt;
+  const gstAmt = gstPercent ? (gstPercent / 100 * afterDiscount) : 0;
+  const finalTotal = Math.round(afterDiscount + gstAmt);
 
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
     const options = {
-      margin: [0.5, 0.5, 0.8, 0.5],
+      margin: [0.05, 0.05, 0.05, 0.05],
       filename: `Quotation_${quotation.quoteId || "invoice"}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
@@ -49,8 +52,15 @@ const QuotationInvoice = () => {
 
   return (
     <div className="container my-5">
-      <div ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 0, fontFamily: "Arial, sans-serif" }}>
-        <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Quotation Invoice</h2>
+      <Button
+          onClick={handleDownloadPDF}
+          variant="success"
+          className="my-1 d-flex ms-auto" // ms-auto will push the button to the right
+        >
+          Download Quotation
+        </Button>
+      <div className="no-print" ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 0, fontFamily: "Arial, sans-serif" }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Quotation</h2>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
           <tbody>
@@ -59,16 +69,16 @@ const QuotationInvoice = () => {
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.occasion}</td>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.occasion}</td> */}
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteTime}</td>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.address}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date & time</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.deliveryDateTime}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date & time</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.dismantleDateTime}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteDate}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.endDate}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Manpower Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.manpowerSupport}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.additionalLogisticsSupport}</td>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.additionalLogisticsSupport}</td> */}
             </tr>
           </tbody>
         </table>
@@ -76,8 +86,10 @@ const QuotationInvoice = () => {
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
           <thead style={{ backgroundColor: '#2F75B5', color: '#fff' }}>
             <tr>
-              <th style={{ border: "1px solid #666", padding: 8 }}>Sl No</th>
-              <th style={{ border: "1px solid #666", padding: 8 }}>Elements</th>
+              <th style={{ border: "1px solid #666", padding: 8, width: '50px' }}>S.No</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>Product Name</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>Slot</th>
+              <th style={{ border: "1px solid #666", padding: 8, width: '80px' }}>Image</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>Price per Unit</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>No of units</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>No of days</th>
@@ -89,24 +101,63 @@ const QuotationInvoice = () => {
               <tr key={idx}>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{idx + 1}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.productName}</td>
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.price}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || quotation?.quoteTime}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>
+                  {product.image && (
+                    <img
+                      src={`${ImageApiURL}/product/${product.image}`}
+                      alt={product.productName}
+                      style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                    />
+                  )}
+                </td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.pricePerUnit}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.quantity}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.days}</td>
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.price * product.quantity * product.days}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.amount * product.days}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         <div style={{ maxWidth: 300, marginLeft: 'auto', fontSize: '13px' }}>
-          <div className="d-flex justify-content-between mb-2"><span>Total Before Discount</span><span>₹{subtotal}</span></div>
-          <div className="d-flex justify-content-between mb-2"><span>Discount {discountPercent}%</span><span>-₹{discountAmt.toFixed(2)}</span></div>
-          <div className="d-flex justify-content-between mb-2"><span>Total After Discount</span><span>₹{afterDiscount.toFixed(2)}</span></div>
-          <div className="d-flex justify-content-between mb-2"><span>Transportation</span><span>₹{transport}</span></div>
-          <div className="d-flex justify-content-between mb-2"><span>Manpower Cost</span><span>₹{manpower}</span></div>
-          <div className="d-flex justify-content-between mb-2" style={{ fontWeight: 600 }}><span>Total</span><span>₹{afterCharges.toFixed(2)}</span></div>
-          <div className="d-flex justify-content-between mb-2"><span>GST {gstPercent}%</span><span>₹{gstAmt.toFixed(2)}</span></div>
-          <div className="d-flex justify-content-between" style={{ fontWeight: '700', fontSize: 14, background: '#D9D9D9', padding: '4px', marginTop: '4px' }}><span>GRAND TOTAL</span><span>₹{grandTotal}</span></div>
+          <div className="d-flex justify-content-between mb-2">
+            <span style={{ fontWeight: "600" }}>Products Total:</span>
+            <span style={{ fontWeight: "600" }}>₹{productsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="d-flex justify-content-between mb-2">
+            <span>Transportation:</span>
+            <span>₹{transport.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="d-flex justify-content-between mb-2">
+            <span>Manpower Charge:</span>
+            <span>₹{manpower.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
+            <span>{quotation.discount !== 0 ? "Total amount before discount:" : "Total amount:"}</span>
+            <span>₹{totalWithCharges.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          {quotation.discount !== 0 && (
+            <>
+              <div className="d-flex justify-content-between mb-2">
+                <span>Discount ({quotation?.discount.toFixed(2)}%):</span>
+                <span>-₹{discountAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
+                <span>Total amount after discount:</span>
+                <span>₹{afterDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            </>
+          )}
+          <div className="d-flex justify-content-between mb-2">
+            <span>GST ({gstPercent.toFixed(2)}%):</span>
+            <span>₹{gstAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <hr style={{ borderColor: "#e0e0e0" }} />
+          <div className="d-flex justify-content-between" style={{ fontSize: "18px", fontWeight: "700", color: "#34495e" }}>
+            <span>Grand Total:</span>
+            <span>₹{finalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
         </div>
 
         <div style={{ fontSize: "11px", marginTop: 30 }}>
@@ -120,9 +171,9 @@ const QuotationInvoice = () => {
           </ol>
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 20 }}>
-          <button className="btn btn-primary" onClick={handleDownloadPDF}>Download PDF</button>
-        </div>
+        {/* <div style={{ textAlign: 'right', marginTop: 20 }}> */}
+        {/* <button className="btn btn-primary" onClick={handleDownloadPDF}>Download PDF</button> */}
+        {/* </div> */}
       </div>
     </div>
   );

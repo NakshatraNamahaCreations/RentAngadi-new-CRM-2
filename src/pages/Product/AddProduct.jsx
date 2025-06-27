@@ -389,14 +389,16 @@ const AddProduct = () => {
             <Row className="mb-3">
               <Col md={4}>
                 <Form.Label style={{ fontSize: 14 }}>
-                  Available Stock <span className="text-danger">*</span>
+                  Available Stock 
+                  {/* <span className="text-danger">*</span> */}
                 </Form.Label>
                 <Form.Control
                   type="number"
                   name="availableStock"
                   value={productData.availableStock}
                   onChange={handleChange}
-                  required
+                  // required
+                  disabled
                   className="rounded-3 shadow-sm"
                   style={{ fontSize: 14 }}
                 />

@@ -116,6 +116,7 @@ const ClientReports = () => {
                         />
                     </Col>
                     <Col sm={3}>
+                        <h6 className="text-dark mb-2">Dismantle date</h6>
                         <DatePicker
                             selected={deliveryDate}
                             onChange={setDeliveryDate}
@@ -125,6 +126,7 @@ const ClientReports = () => {
                         />
                     </Col>
                     <Col sm={3}>
+                        <h6 className="text-dark mb-2">Delivery date</h6>
                         <DatePicker
                             selected={dismantleDate}
                             onChange={setDismantleDate}

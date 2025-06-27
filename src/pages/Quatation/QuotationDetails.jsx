@@ -1453,7 +1453,7 @@ const QuotationDetails = () => {
             <span>₹{(quotation.labourecharge || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-            <span>Total amount:</span>
+            <span>{quotation?.discount != 0 ? "Total amount before discount:" : "Total amount:"}</span>
             <span>₹{(quotation.totalWithCharges || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2">

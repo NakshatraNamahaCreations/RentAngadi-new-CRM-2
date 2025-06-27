@@ -103,17 +103,33 @@ const Invoice = () => {
   };
 
   // Function to handle PDF download with proper margins
-  const handleDownloadPDF = () => {
-    const element = invoiceRef.current;  // This refers to the content inside the invoice
-    const opt = {
-      margin: [0.5, 0.5, 0.8, 0.5],  // Top, Right, Bottom, Left margins
-      filename: `${invoice.invoiceNo || "invoice"}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-    };
-    html2pdf().from(element).set(opt).save();  // Generate the PDF and save it
+const handleDownloadPDF = async () => {
+  const element = invoiceRef.current;
+
+  // Wait for all images inside the invoice to load
+  const images = element.querySelectorAll("img");
+  const promises = Array.from(images).map(
+    (img) =>
+      new Promise((resolve) => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = resolve;
+          img.onerror = resolve;
+        }
+      })
+  );
+  await Promise.all(promises);
+
+  const opt = {
+    margin: [0.5, 0.5, 0.8, 0.5],
+    filename: `${invoice.invoiceNo || "invoice"}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true }, // useCORS is important!
+    jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
   };
+  html2pdf().from(element).set(opt).save();
+};
 
   return (
     <Container ref={invoiceRef} className="p-4 border" style={{ fontSize: "12px" }}>
@@ -274,6 +290,7 @@ const Invoice = () => {
                     src={`${ImageApiURL}/product/${item.ProductIcon}`}
                     alt={item.productName}
                     style={{ width: "50px", height: "50px" }}
+                    crossOrigin="anonymous"
                   />
                 </td>
                 <td className="text-center">998596</td>
