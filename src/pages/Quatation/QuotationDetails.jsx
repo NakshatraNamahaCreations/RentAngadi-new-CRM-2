@@ -196,7 +196,7 @@ const QuotationDetails = () => {
       // First, make the API call to fetch payment data
       const orderDetails = {
         quotationId: quotation?.quoteId,
-        totalAmount: quotation?.GrandTotal,
+        totalAmount: quotation.finalTotal || quotation?.GrandTotal,
         advancedAmount: paymentData.amount,
         paymentMode: paymentData.status, // Send selected payment mode
         paymentRemarks:
@@ -303,7 +303,8 @@ const QuotationDetails = () => {
         quoteId: quotation.quoteId,
         ClientId: quotation?.clientId,
         clientNo: quotation?.clientNo,
-        GrandTotal: grandTotal,
+        GrandTotal: quotation.finalTotal || grandTotal,
+        refurbishmentAmount: quotation?.refurbishment || 0,
         paymentStatus: quotation?.paymentStatus,
         clientName: quotation?.clientName,
         executivename: quotation?.executivename,
@@ -1167,7 +1168,7 @@ const QuotationDetails = () => {
                 quotation.discountAmt = quotation?.allProductsTotal * (quotation?.discount / 100)
                 quotation.afterDiscount = quotation?.allProductsTotal - quotation.discountAmt
                 quotation.totalWithCharges = quotation?.afterDiscount + quotation.transportcharge + quotation.labourecharge
-                quotation.refurbishment && (quotation.totalWithCharges += quotation?.refurbishment)                
+                quotation.refurbishment && (quotation.totalWithCharges += quotation?.refurbishment)
 
                 quotation.gstAmt = quotation.totalWithCharges * (quotation?.GST / 100);  // Assuming GST is in percentage (e.g., 18 for 18%)
                 quotation.finalTotal = quotation.totalWithCharges + quotation?.gstAmt;  // Add GST to the total after discount

@@ -58,12 +58,16 @@ const Invoice = () => {
 
   // Destructure product details from order
   const items = order.slots.flatMap((slot) => slot.products) || [];
+  // order.discount = 0
+  // order.GST = 0
+  // order.refurbishment = 0
 
   const discount = Number(order?.discount || 0);
   // const discount = 0
   const transport = Number(order?.transportcharge || 0);
   const manpower = Number(order?.labourecharge || 0);
   const gst = Number(order?.GST || 0);
+  const refurbishment = Number(order?.refurbishmentAmount || 0);
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
@@ -71,11 +75,11 @@ const Invoice = () => {
     return sum + (item.total || 0) * days; // Multiply total by days for each product
   }, 0);
 
-  const afterCharges = subtotal + transport + manpower;
-  const discountAmt = afterCharges * (discount / 100);
-  const afterDiscount = afterCharges - discountAmt;
-  const gstAmt = afterDiscount * (gst / 100);
-  const grandTotal = Math.round(afterDiscount + gstAmt);
+  const discountAmt = (subtotal * discount) / 100;
+  const totalBeforeCharges = subtotal - discountAmt;
+  const totalAfterCharges = totalBeforeCharges + manpower + transport + refurbishment;
+  const gstAmt = (totalAfterCharges * gst) / 100;
+  const grandTotal = totalAfterCharges + gstAmt;
 
   const invoice = {
     invoiceNo: order.invoiceId || "-",
@@ -309,10 +313,24 @@ const Invoice = () => {
         <tbody>
           <tr>
             <td>
-              <b>Total Product Amount</b>
+              <b>{discount != 0 ? "Total Amount before discount" : "Total Amount"}</b>
             </td>
             <td>₹ {subtotal.toFixed(2)}</td>
           </tr>
+          {discount != 0 && (
+            <tr>
+              <td>
+                <b>Discount ({discount}%)</b>
+              </td>
+              <td>₹ {discountAmt.toFixed(2)}</td>
+            </tr>
+          )}
+          {discount !== 0 && <tr>
+            <td>
+              <b>Total amount after discount</b>
+            </td>
+            <td>₹ {totalBeforeCharges.toFixed(2)}</td>
+          </tr>}
           <tr>
             <td>
               <b>Labour Charges</b>
@@ -327,25 +345,10 @@ const Invoice = () => {
           </tr>
           <tr>
             <td>
-              <b>{discount !== 0 ? "Total amount before discount" : "Total amount"}</b>
+              <b>{"Refurbishment Charges"}</b>
             </td>
-            <td>₹ {(subtotal + manpower + transport).toFixed(2)}</td>
+            <td>₹ {refurbishment.toFixed(2)}</td>
           </tr>
-          {discount !== 0 && (
-            <tr>
-              <td>
-                <b>Discount ({discount}%)</b>
-              </td>
-              <td>₹ {discountAmt.toFixed(2)}</td>
-            </tr>
-          )}
-          {discount !== 0 && <tr>
-            <td>
-              <b>Total amount after discount</b>
-            </td>
-            <td>₹ {(subtotal + manpower + transport - discountAmt).toFixed(2)}</td>
-          </tr>}
-
           <tr>
             <td>
               <b>GST @ {gst}%</b>

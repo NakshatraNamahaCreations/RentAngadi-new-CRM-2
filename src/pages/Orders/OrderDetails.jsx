@@ -727,7 +727,7 @@ const OrderDetails = () => {
   const getRefurbishmentByOrderId = async () => {
     try {
       const response = await fetch(`${ApiURL}/refurbishment/${id}`);
-      console.log(response, "response");
+      // console.log(response, "response");
       const data = await response.json();
       setRefurbishmentdata(data);
     } catch (error) {
@@ -767,17 +767,19 @@ const OrderDetails = () => {
     const labour = order.labourecharge || 0;
     const transport = order.transportcharge || 0;
     const discountPercent = order.discount || 0;
+    const refurbishmentAmount = order.refurbishmentAmount || 0;
     const gstPercent = order.GST || 0;
     // const adjustments = order.adjustments || 0;
 
     // const subtotal = productTotal + labour + transport - adjustments;
-    const subtotal = productTotal + labour + transport;
-    const discountAmount = (subtotal * discountPercent) / 100;
-    const gstAmount = ((subtotal - discountAmount) * gstPercent) / 100;
+    const discountAmount = (productTotal * discountPercent) / 100;
+    const totalBeforeCharges = productTotal - discountAmount;
+    const totalAfterCharges = totalBeforeCharges + labour + transport + refurbishmentAmount;
+    const gstAmount = ((totalAfterCharges) * gstPercent) / 100;
 
     // console.log("calc: ", subtotal - discountAmount + gstAmount)
 
-    return Math.round(subtotal - discountAmount + gstAmount);
+    return Math.round(totalAfterCharges + gstAmount);
   };
 
   const grandTotal = order ? calculateGrandTotal(order) : 0;
@@ -964,12 +966,16 @@ const OrderDetails = () => {
                 {/* {!pdfMode && ( */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Grand Total: </span>
-                  <span style={valueStyle}>₹{grandTotal}</span>
+                  <span style={valueStyle}>₹ {grandTotal}</span>
                 </div>
                 {/* )} */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
+                </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>RoundOff:</span>
+                  <span style={valueStyle}>₹ {order?.roundOff}</span>
                 </div>
               </Col>
             </Row>
