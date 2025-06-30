@@ -14,6 +14,8 @@ const QuotationInvoice = () => {
   const items = location.state?.items || [];
   const productDates = location.state?.productDates || {};
 
+  console.log(`quotation: `, quotation);
+
   if (!quotation) {
     return (
       <div className="container my-5">
@@ -25,19 +27,19 @@ const QuotationInvoice = () => {
     );
   }
 
-  // Calculate products total
-  const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
-  const transport = Number(quotation.transportcharge || 0);
-  const manpower = Number(quotation.labourecharge || 0);
-  const discountPercent = Number(quotation.discount || 0);
-  const gstPercent = Number(quotation.GST || 0);
+  // // Calculate products total
+  // const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  // const transport = Number(quotation.transportcharge || 0);
+  // const manpower = Number(quotation.labourecharge || 0);
+  // const discountPercent = Number(quotation.discount || 0);
+  // const gstPercent = Number(quotation.GST || 0);
 
-  // Calculate totals in the new order
-  const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
-  const afterDiscount = productsTotal - discountAmt;
-  const totalWithCharges = afterDiscount + transport + manpower;
-  const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
-  const finalTotal = Math.round(totalWithCharges + gstAmt);
+  // // Calculate totals in the new order
+  // const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+  // const afterDiscount = productsTotal - discountAmt;
+  // const totalWithCharges = afterDiscount + transport + manpower;
+  // const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
+  // const finalTotal = Math.round(totalWithCharges + gstAmt);
 
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
@@ -153,27 +155,33 @@ const QuotationInvoice = () => {
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Transportation</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{transport.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{quotation?.transportcharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Manpower Charge</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{manpower.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{quotation?.labourecharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
-            {gstPercent > 0 && (
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Refurbishment</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {quotation?.GST != 0 && quotation?.GST > 0 && (
               <tr>
-                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({gstPercent}%)</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({quotation?.GST}%)</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  ₹{gstAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  ₹{quotation?.gstAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
               </tr>
             )}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold", backgroundColor: "#f8f9fa" }}>Grand Total</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right", backgroundColor: "#f8f9fa" }}>
-                ₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{quotation?.finalTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
           </tbody>

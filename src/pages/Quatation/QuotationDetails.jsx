@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Button,
@@ -78,6 +77,8 @@ const QuotationDetails = () => {
   const [editQty, setEditQty] = useState(1);
   const [productDates, setProductDates] = useState({});
   const [items, setItems] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [refurbishment, setRefurbishment] = useState(0);
 
   // const [grandTotal, setGrandTotal] = useState(0)
 
@@ -1069,8 +1070,10 @@ const QuotationDetails = () => {
                   Executive Name
                 </td>
                 <td>{quotation.executivename || ""}</td>
-                <td style={{ fontWeight: "500", color: "#34495e" }}>Venue</td>
-                <td>{quotation.placeaddress || ""}</td>
+                {/* <td style={{ fontWeight: "500", color: "#34495e" }}>Venue</td>
+                <td>{quotation.placeaddress || ""}</td> */}
+                <td style={{ fontWeight: "500", color: "#34495e" }}>Address</td>
+                <td>{quotation.address || ""}</td>
               </tr>
               <tr>
                 <td style={{ fontWeight: "500", color: "#34495e" }}>
@@ -1083,8 +1086,8 @@ const QuotationDetails = () => {
                 <td>{quotation.endDate || ""}</td>
               </tr>
               <tr>
-                <td style={{ fontWeight: "500", color: "#34495e" }}>Address</td>
-                <td>{quotation.address || ""}</td>
+                {/* <td style={{ fontWeight: "500", color: "#34495e" }}>Address</td>
+                <td>{quotation.address || ""}</td> */}
                 <td style={{ fontWeight: "500", color: "#34495e" }}>Status</td>
                 <td>
                   {quotation.status ? (
@@ -1164,6 +1167,7 @@ const QuotationDetails = () => {
                 quotation.discountAmt = quotation?.allProductsTotal * (quotation?.discount / 100)
                 quotation.afterDiscount = quotation?.allProductsTotal - quotation.discountAmt
                 quotation.totalWithCharges = quotation?.afterDiscount + quotation.transportcharge + quotation.labourecharge
+                quotation.refurbishment && (quotation.totalWithCharges += quotation?.refurbishment)                
 
                 quotation.gstAmt = quotation.totalWithCharges * (quotation?.GST / 100);  // Assuming GST is in percentage (e.g., 18 for 18%)
                 quotation.finalTotal = quotation.totalWithCharges + quotation?.gstAmt;  // Add GST to the total after discount
@@ -1457,6 +1461,98 @@ const QuotationDetails = () => {
           <div className="d-flex justify-content-between mb-2">
             <span>Manpower Charge:</span>
             <span>₹{(quotation.labourecharge || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="d-flex justify-content-between mb-2">
+            <span>Refurbishment:</span>
+            {/* {!editMode ? (
+              <>
+                <div className="d-flex align-items-center">
+                <Button variant="link" size="sm" onClick={() => setEditMode(true)}>
+                    <FaEdit />
+                  </Button>
+                  <span className="me-2">
+                    ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <Form.Group controlId="refurbishment" style={{ width: "150px" }}>
+                  <Form.Control
+                    type="number"
+                    value={quotation.refurbishment || 0}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      setQuotation({ ...quotation, refurbishment: value });
+                      // Update total calculations
+                      quotation.refurbishment = value;
+                      quotation.totalWithCharges = quotation?.afterDiscount + quotation.transportcharge + quotation.labourecharge + quotation.refurbishment;
+                      quotation.gstAmt = quotation.totalWithCharges * (quotation?.GST / 100);
+                      quotation.finalTotal = quotation.totalWithCharges + quotation?.gstAmt;
+                    }}
+                    min="0"
+                    step="0.01"
+                  />
+                </Form.Group>
+                <Button variant="primary" size="sm" className="ms-2" onClick={() => setEditMode(false)}>
+                  Save
+                </Button>
+                <Button variant="secondary" size="sm" className="ms-2" onClick={() => {
+                  // Reset to original value
+                  setQuotation(prev => ({ ...prev, refurbishment: prev.refurbishment }));
+                  setEditMode(false);
+                }}>
+                  Cancel
+                </Button>
+              </>
+            )} */}
+            {!editMode ? (
+              <>
+                <div className="d-flex align-items-center">
+                  <Button variant="link" size="sm" onClick={() => setEditMode(true)}>
+                    <FaEdit />
+                  </Button>
+                  <span className="">
+                    ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="d-flex align-items-center">
+                  <Form.Group controlId="refurbishment" style={{ width: "150px" }}>
+                    <Form.Control
+                      type="number"
+                      value={refurbishment}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setRefurbishment(value)
+                        // setQuotation({ ...quotation, refurbishment: value });
+                        // Update total calculations
+                        // quotation.refurbishment = value;
+                      }}
+                      min="0"
+                      step="0.01"
+                    />
+                  </Form.Group>
+                  <Button variant="primary" size="sm" className="ms-2" onClick={() => {
+                    setQuotation({ ...quotation, refurbishment: refurbishment });
+                    setEditMode(false)
+                  }}>
+                    Save
+                  </Button>
+                  <Button variant="secondary" size="sm" className="ms-2" onClick={() => {
+                    // Reset to original value
+                    setQuotation(prev => ({ ...prev, refurbishment: prev.refurbishment }));
+                    setEditMode(false);
+                    setRefurbishment(0)
+                  }}>
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
+
           </div>
           {/* <div className="d-flex justify-content-between mb-2">
             <span>Round Off:</span>
