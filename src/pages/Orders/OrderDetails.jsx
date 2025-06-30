@@ -91,6 +91,10 @@ const OrderDetails = () => {
     date: new Date().toLocaleDateString("en-GB").split("/").join("-"),
   });
 
+  // Add roundOff state
+  const [roundOff, setRoundOff] = useState(0);
+  const [isEditingRoundOff, setIsEditingRoundOff] = useState(false);
+
   const handleShowGenerateModal = () => setShowGenerateModal(true);
   const handleCloseGenerateModal = () => setShowGenerateModal(false);
 
@@ -804,6 +808,12 @@ const OrderDetails = () => {
     getRefurbishmentByOrderId();
   }, [id]);
 
+  useEffect(() => {
+    if (order) {
+      setRoundOff(order.roundOff || 0);
+    }
+  }, [order]);
+
   const navigateToDetails = (_id) => {
     // Navigate to the next page and pass the `_id` in state
     navigate("/invoice", { state: { id: _id } });
@@ -895,6 +905,40 @@ const OrderDetails = () => {
     }
   };
 
+  const handleRoundOffChange = (e) => {
+    const value = parseInt(e.target.value) || 0;
+    setRoundOff(value);
+  };
+
+  const handleSaveRoundOff = async () => {
+    try {
+      const response = await axios.put(`${ApiURL}/order/updateOrderFields`, {
+        orderId: order._id,
+        roundOff,
+      });
+
+      if (response.status === 200) {
+        toast.success("RoundOff updated successfully");
+        setIsEditingRoundOff(false);
+        // Update order state with new roundOff value
+        setOrder(prev => ({
+          ...prev,
+          roundOff
+        }));
+      } else {
+        toast.error("Failed to update roundOff");
+      }
+    } catch (error) {
+      console.error("Error updating roundOff:", error);
+      toast.error("Error occurred while updating roundOff");
+    }
+  };
+
+  const handleCancelRoundOff = () => {
+    setRoundOff(order.roundOff || 0);
+    setIsEditingRoundOff(false);
+  };
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
@@ -973,9 +1017,48 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
-                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                <div className="mb-1" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                   <span style={labelStyle}>RoundOff:</span>
-                  <span style={valueStyle}>₹ {order?.roundOff}</span>
+                  {!isEditingRoundOff ? (
+                    <>
+                      <span style={valueStyle}>₹ {roundOff}</span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => setIsEditingRoundOff(true)}
+                      >
+                        <FaEdit className="fa-sm" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        value={roundOff}
+                        onChange={handleRoundOffChange}
+                        style={{ maxWidth: "100px", height: "30px" }}
+                      />
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={handleSaveRoundOff}
+                      >
+                        <FaCheck className="fa-1x" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={handleCancelRoundOff}
+                      >
+                        <FaTimes />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>paid so far:</span>
+                  <span style={valueStyle}>₹ {order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)}</span>
                 </div>
               </Col>
             </Row>

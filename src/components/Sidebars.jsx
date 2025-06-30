@@ -217,7 +217,7 @@ const Sidebars = () => {
   //   },
   // ];
 
-    const menuItems = [
+  const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: MdDashboard },
 
     { name: "Master", path: "/master", icon: FaClipboardList },
@@ -271,6 +271,11 @@ const Sidebars = () => {
       path: "/reports",
       icon: FaChartLine,
     },
+    {
+      name: "damaged",
+      path: "/damaged-products",
+      icon: FaChartBar,
+    }
   ];
 
   const isActiveLink = (path) => {
@@ -304,9 +309,8 @@ const Sidebars = () => {
           <li key={index} className="nav-item my-1">
             <Link
               to={item.path}
-              className={`${
-                isActiveLink(item.path) ? "bg-dark text-dark" : ""
-              } nav-link d-flex align-items-center text-white`}
+              className={`${isActiveLink(item.path) ? "bg-dark text-dark" : ""
+                } nav-link d-flex align-items-center text-white`}
             >
               <item.icon className="me-2" />
               {item.name}
