@@ -30,10 +30,10 @@ const Client = () => {
       if (res.status === 200 && Array.isArray(res.data.Client)) {
         // Map API data to expected structure
         const mapped = res.data.Client.map((c) => ({
-          companyName: c.clientName || "",
-          contactPersonNumber: c.phoneNumber || "",
-          email: c.email || "",
-          address: c.address || "",
+          companyName: c.clientName || "N/A",
+          contactPersonNumber: c.phoneNumber || "N/A",
+          email: c.email || "N/A",
+          address: c.address || "N/A",
           executives: c.executives || [],
           _id: c._id,
         }));

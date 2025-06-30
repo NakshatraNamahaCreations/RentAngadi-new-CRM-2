@@ -194,7 +194,7 @@ const QuotationDetails = () => {
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
-        quotationId: quotation?._id,
+        quotationId: quotation?.quoteId,
         totalAmount: quotation?.GrandTotal,
         advancedAmount: paymentData.amount,
         paymentMode: paymentData.status, // Send selected payment mode

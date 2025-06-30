@@ -30,9 +30,10 @@ import InventoryProduct from "./pages/InventoryProduct/InventoryProductList.jsx"
 import Invoice from "./pages/Orders/Invoice.jsx";
 import ProductDetails from "./pages/Product/ProductDetails.jsx";
 import QuotationDetails from "./pages/Quatation/QuotationDetails.jsx";
-import ProductReports from "./pages/reports/ProductReports.jsx";
+import ProductReports from "./pages/reports/ProductReports";
 import QuotationInvoice from "./pages/Quatation/QuotationInvoice.jsx";
-import ClientReports from "./pages/reports/ClientReports .jsx";
+import ClientReports from "./pages/reports/ClientReports ";
+import Reports from "./pages/reports/Reports";
 
 function App() {
   // Use state to trigger re-render on login/logout
@@ -87,11 +88,10 @@ function App() {
             <Route path="/refurbihsment-report" element={<RefurbishmentReport />} />
             <Route path="/refurbishment-invoice/:id" element={<RefurbishmentInvoice />} />
             <Route path="/inventory-product-list" element={<InventoryProduct />} />
-            <Route path="/product-reports" element={<ProductReports />} />
+            <Route path="/reports" element={<Reports />} />
             {/* Redirect /login to dashboard if already logged in */}
             <Route path="/login" element={<Navigate to="/" />} />
             <Route path="/quotation/invoice/:id" element={<QuotationInvoice/>} />
-            <Route path="/client-reports" element={<ClientReports/>} />
           </Routes>
         </Layout>
       ) : (

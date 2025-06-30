@@ -123,7 +123,7 @@ const PaymentReport = () => {
       "Quotation ID":
         payment.quotationId?.quoteId || payment.quotationId || "N/A",
       "Grand Total": payment.totalAmount || payment.grandTotal,
-      "Advance Amount": payment.advancedAmount || payment.advanceAmount,
+      "Advance Amount": payment.advancedAmount !== undefined ? payment.advancedAmount : payment.advanceAmount !== undefined ? payment.advanceAmount : 0,
       "Payment Mode": payment.paymentMode,
       Status: payment.paymentStatus || payment.status || "Confirm",
     }));
@@ -244,7 +244,7 @@ const PaymentReport = () => {
                       {payment.totalAmount || payment.grandTotal}
                     </td>
                     <td style={{ fontSize: "12px" }}>
-                      {payment.advancedAmount || payment.advanceAmount}
+                      {payment.advancedAmount !== undefined ? payment.advancedAmount : payment.advanceAmount !== undefined ? payment.advanceAmount : "N/A"}
                     </td>
                     <td style={{ fontSize: "12px" }}>{payment.paymentRemarks}</td>
                     <td style={{ fontSize: "12px" }}>

@@ -256,14 +256,19 @@ const Sidebars = () => {
       path: "/inventory-product-list",
       icon: MdInventory,
     },
+    // {
+    //   name: "Product Reports",
+    //   path: "/product-reports",
+    //   icon: FaChartLine,
+    // },
+    // {
+    //   name: "Client Reports",
+    //   path: "/client-reports",
+    //   icon: FaChartLine,
+    // },
     {
-      name: "Product Reports",
-      path: "/product-reports",
-      icon: FaChartLine,
-    },
-    {
-      name: "Client Reports",
-      path: "/client-reports",
+      name: "Reports",
+      path: "/reports",
       icon: FaChartLine,
     },
   ];

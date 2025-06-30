@@ -117,9 +117,7 @@ const InventoryProduct = () => {
         <Row className="g-3 align-items-end">
           <Col md={4}>
             <Form.Group controlId="deliveryDate">
-              <Form.Label style={{ fontSize: "14px" }}>
-                Start Date
-              </Form.Label>
+            <h6 className="text-dark">Start Date</h6>
               {/* <Form.Control
                 type="date"
                 value={deliveryDate}
@@ -139,9 +137,7 @@ const InventoryProduct = () => {
           </Col>
           <Col md={4}>
             <Form.Group controlId="dismantleDate">
-              <Form.Label style={{ fontSize: "14px" }}>
-                End Date
-              </Form.Label>
+            <h6 className="text-dark">End Date</h6>
               <DatePicker
                 selected={dismantleDate} // Default to initial quoteDate
                 onChange={(date) => {
