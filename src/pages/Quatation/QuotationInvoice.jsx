@@ -29,20 +29,21 @@ const QuotationInvoice = () => {
   const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
   const transport = Number(quotation.transportcharge || 0);
   const manpower = Number(quotation.labourecharge || 0);
-  const totalWithCharges = productsTotal + transport + manpower;
   const discountPercent = Number(quotation.discount || 0);
   const gstPercent = Number(quotation.GST || 0);
 
-  const discountAmt = discountPercent ? (discountPercent / 100 * totalWithCharges) : 0;
-  const afterDiscount = totalWithCharges - discountAmt;
-  const gstAmt = gstPercent ? (gstPercent / 100 * afterDiscount) : 0;
-  const finalTotal = Math.round(afterDiscount + gstAmt);
+  // Calculate totals in the new order
+  const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+  const afterDiscount = productsTotal - discountAmt;
+  const totalWithCharges = afterDiscount + transport + manpower;
+  const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
+  const finalTotal = Math.round(totalWithCharges + gstAmt);
 
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
     const options = {
       margin: [0.05, 0.05, 0.05, 0.05],
-      filename: `Quotation_${quotation.quoteId || "invoice"}.pdf`,
+      filename: `${formatDateToMonthName(quotation.quoteDate)} ${formatDateToMonthName(quotation.endDate)} ${quotation.clientName}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
@@ -50,23 +51,30 @@ const QuotationInvoice = () => {
     html2pdf().from(element).set(options).save();
   };
 
+  const formatDateToMonthName = (dateString) => {
+    if (!dateString) return '';
+    const [day, month, year] = dateString.split('-');
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${day} ${months[month - 1].slice(0, 3)} `;
+  };
+
   return (
     <div className="container my-5">
       <Button
-          onClick={handleDownloadPDF}
-          variant="success"
-          className="my-1 d-flex ms-auto" // ms-auto will push the button to the right
-        >
-          Download Quotation
-        </Button>
+        onClick={handleDownloadPDF}
+        variant="success"
+        className="my-1 d-flex ms-auto" // ms-auto will push the button to the right
+      >
+        Download Quotation
+      </Button>
       <div className="no-print" ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 0, fontFamily: "Arial, sans-serif" }}>
         <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Quotation</h2>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
           <tbody>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.executivename}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.executivename}</td>
             </tr>
             <tr>
               {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.occasion}</td> */}
@@ -93,7 +101,7 @@ const QuotationInvoice = () => {
               <th style={{ border: "1px solid #666", padding: 8 }}>Price per Unit</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>No of units</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>No of days</th>
-              <th style={{ border: "1px solid #666", padding: 8 }}>Amount</th>
+              <th style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -114,51 +122,62 @@ const QuotationInvoice = () => {
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.pricePerUnit}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.quantity}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.days}</td>
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.amount * product.days}</td>
+                <td style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>{product.amount * product.days}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div style={{ maxWidth: 300, marginLeft: 'auto', fontSize: '13px' }}>
-          <div className="d-flex justify-content-between mb-2">
-            <span style={{ fontWeight: "600" }}>Products Total:</span>
-            <span style={{ fontWeight: "600" }}>₹{productsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-          <div className="d-flex justify-content-between mb-2">
-            <span>Transportation:</span>
-            <span>₹{transport.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-          <div className="d-flex justify-content-between mb-2">
-            <span>Manpower Charge:</span>
-            <span>₹{manpower.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-          <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-            <span>{quotation.discount !== 0 ? "Total amount before discount:" : "Total amount:"}</span>
-            <span>₹{totalWithCharges.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-          {quotation.discount !== 0 && (
-            <>
-              <div className="d-flex justify-content-between mb-2">
-                <span>Discount ({quotation?.discount.toFixed(2)}%):</span>
-                <span>-₹{discountAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-                <span>Total amount after discount:</span>
-                <span>₹{afterDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-            </>
-          )}
-          {quotation?.GST !== 0 &&<div className="d-flex justify-content-between mb-2">
-            <span>GST ({gstPercent.toFixed(2)}%):</span>
-            <span>₹{gstAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>}
-          <hr style={{ borderColor: "#e0e0e0" }} />
-          <div className="d-flex justify-content-between" style={{ fontSize: "18px", fontWeight: "700", color: "#34495e" }}>
-            <span>Grand Total:</span>
-            <span>₹{finalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-          </div>
-        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
+          <tbody>
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>{quotation?.discount != 0 ? "Total Amount before discount" : "Total amount"}</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {quotation?.discount != 0 && (
+              <tr>
+                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Discount ({quotation?.discount}%)</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                  -₹{quotation?.discountAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
+            {quotation?.discount != 0 && (<tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Total Amount After Discount</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{quotation?.discount != 0 ? quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>)}
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Transportation</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{transport.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Manpower Charge</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{manpower.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {gstPercent > 0 && (
+              <tr>
+                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({gstPercent}%)</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                  ₹{gstAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold", backgroundColor: "#f8f9fa" }}>Grand Total</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right", backgroundColor: "#f8f9fa" }}>
+                ₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         <div style={{ fontSize: "11px", marginTop: 30 }}>
           <strong>Note:</strong>

@@ -116,21 +116,21 @@ const ClientReports = () => {
                         />
                     </Col>
                     <Col sm={3}>
-                        <h6 className="text-dark mb-2">Dismantle date</h6>
+                        <h6 className="text-dark mb-2">Start date</h6>
                         <DatePicker
                             selected={deliveryDate}
                             onChange={setDeliveryDate}
-                            placeholderText="Delivery Date"
+                            placeholderText="DD/MM/YYYY"
                             className="form-control"
                             dateFormat="dd/MM/yyyy"
                         />
                     </Col>
                     <Col sm={3}>
-                        <h6 className="text-dark mb-2">Delivery date</h6>
+                        <h6 className="text-dark mb-2">End date</h6>
                         <DatePicker
                             selected={dismantleDate}
                             onChange={setDismantleDate}
-                            placeholderText="Dismantle Date"
+                            placeholderText="DD/MM/YYYY"
                             className="form-control"
                             dateFormat="dd/MM/yyyy"
                         />

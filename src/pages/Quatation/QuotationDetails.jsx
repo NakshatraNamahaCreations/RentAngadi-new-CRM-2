@@ -883,7 +883,6 @@ const QuotationDetails = () => {
     doc.save('quotation.pdf');
   };
 
-
   const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     const imageURL = 'https://api.rentangadi.in/product/1750839736747_Retro 1 seater.png'; // Image URL
@@ -955,7 +954,6 @@ const QuotationDetails = () => {
     doc.save('quotation.pdf');
   };
 
-
   const getImageBase64 = async (url) => {
     try {
       const response = await fetch(url);
@@ -1006,7 +1004,6 @@ const QuotationDetails = () => {
       </Container>
     );
   }
-  console.log("items: ", items[0])
 
   return (
     <Container className="my-5" style={{ fontFamily: "'Roboto', sans-serif" }}>
@@ -1021,7 +1018,7 @@ const QuotationDetails = () => {
           <h2 className="mb-0" style={{ color: "#2c3e50", fontWeight: "600" }}>
             Quotation
           </h2>
-          <p className="text-muted mb-0">NNC Event Rentals</p>
+          {/* <p className="text-muted mb-0">NNC Event Rentals</p> */}
         </div>
         <Button
           variant="primary"
@@ -1164,12 +1161,12 @@ const QuotationDetails = () => {
 
                 // quotation.discount = 0
 
-                quotation.totalWithCharges = quotation?.allProductsTotal + quotation.transportcharge + quotation.labourecharge
-                quotation.discountAmt = quotation?.totalWithCharges * (quotation?.discount / 100)
-                quotation.afterDiscount = quotation?.totalWithCharges - quotation.discountAmt
+                quotation.discountAmt = quotation?.allProductsTotal * (quotation?.discount / 100)
+                quotation.afterDiscount = quotation?.allProductsTotal - quotation.discountAmt
+                quotation.totalWithCharges = quotation?.afterDiscount + quotation.transportcharge + quotation.labourecharge
 
-                quotation.gstAmt = quotation.afterDiscount * (quotation?.GST / 100);  // Assuming GST is in percentage (e.g., 18 for 18%)
-                quotation.finalTotal = quotation.afterDiscount + quotation?.gstAmt;  // Add GST to the total after discount
+                quotation.gstAmt = quotation.totalWithCharges * (quotation?.GST / 100);  // Assuming GST is in percentage (e.g., 18 for 18%)
+                quotation.finalTotal = quotation.totalWithCharges + quotation?.gstAmt;  // Add GST to the total after discount
 
 
                 return (
@@ -1428,22 +1425,31 @@ const QuotationDetails = () => {
           >
             Cost Summary
           </h5>
-          <div className="d-flex justify-content-between mb-2">
+          {/* <div className="d-flex justify-content-between mb-2">
             <span style={{ fontWeight: "600" }}>Products Total:</span>
             <span style={{ fontWeight: "600" }}>
               ₹
-              {/* {items
-                .reduce((sum, item) => sum + (item.amount || 0), 0)
-                .toLocaleString(undefined, { minimumFractionDigits: 2 })} */}
               {items
                 .reduce((sum, item) => sum + (item.amount * item?.days || 0), 0)
                 .toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
-          </div>
+          </div> */}
           {/* {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2">
             <span>Discount ({(quotation.discount || 0).toFixed(2)}%):</span>
             <span>{(quotation.discount || 0).toFixed(2)}</span>
           </div>} */}
+          <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
+            <span>{quotation?.discount != 0 ? "Total amount before discount:" : "Total amount:"}</span>
+            <span>₹{(quotation.allProductsTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2">
+            <span>Discount ({(quotation.discount || 0).toFixed(2)}%):</span>
+            <span>-₹{(quotation.discount / 100 * quotation.allProductsTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>}
+          {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
+            <span>Total amount after discount:</span>
+            <span>₹{(quotation.afterDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>}
           <div className="d-flex justify-content-between mb-2">
             <span>Transportation:</span>
             <span>₹{(quotation.transportcharge || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -1452,18 +1458,6 @@ const QuotationDetails = () => {
             <span>Manpower Charge:</span>
             <span>₹{(quotation.labourecharge || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
-          <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-            <span>{quotation?.discount != 0 ? "Total amount before discount:" : "Total amount:"}</span>
-            <span>₹{(quotation.totalWithCharges || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-          {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2">
-            <span>Discount ({(quotation.discount || 0).toFixed(2)}%):</span>
-            <span>-₹{(quotation.discount / 100 * quotation.totalWithCharges).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>}
-          {quotation?.discount != 0 && <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-            <span>Total amount after discount:</span>
-            <span>₹{(quotation.afterDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>}
           {/* <div className="d-flex justify-content-between mb-2">
             <span>Round Off:</span>
             <span>
