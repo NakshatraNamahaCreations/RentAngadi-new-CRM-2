@@ -68,7 +68,7 @@ const Invoice = () => {
   const manpower = Number(order?.labourecharge || 0);
   const gst = Number(order?.GST || 0);
   const refurbishment = Number(order?.refurbishmentAmount || 0);
-
+  
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
     const days = productDays[item.productId] || 1; // Get days for each product
@@ -80,6 +80,7 @@ const Invoice = () => {
   const totalAfterCharges = totalBeforeCharges + manpower + transport + refurbishment;
   const gstAmt = (totalAfterCharges * gst) / 100;
   const grandTotal = totalAfterCharges + gstAmt;
+  const roundOff = Number(order?.roundOff || grandTotal);
 
   const invoice = {
     invoiceNo: order.invoiceId || "-",
@@ -361,6 +362,14 @@ const Invoice = () => {
             </td>
             <td>
               <b>₹ {grandTotal.toFixed(2)}</b>
+            </td>
+          </tr>
+          <tr className="bg-primary text-white">
+            <td>
+              <b>RoundOff</b>
+            </td>
+            <td>
+              <b>₹ {roundOff.toFixed(2)}</b>
             </td>
           </tr>
         </tbody>

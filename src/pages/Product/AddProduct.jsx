@@ -473,7 +473,7 @@ const AddProduct = () => {
                 />
               </Col>
             </Row>
-            <Row className="mb-3">
+            {/* <Row className="mb-3">
               <Col md={4}>
                 <Form.Label style={{ fontSize: 14 }}>
                   Repair Count
@@ -488,7 +488,7 @@ const AddProduct = () => {
                   min={0}
                 />
               </Col>
-            </Row>
+            </Row> */}
 
             {/* Color + Material */}
             <Row className="mb-3">

@@ -272,7 +272,7 @@ const Sidebars = () => {
       icon: FaChartLine,
     },
     {
-      name: "damaged",
+      name: "Damaged",
       path: "/damaged-products",
       icon: FaChartBar,
     }
