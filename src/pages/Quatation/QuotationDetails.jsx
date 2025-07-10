@@ -195,7 +195,7 @@ const QuotationDetails = () => {
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
-        quotationId: quotation?.quoteId,
+        quotationId: quotation?._id,
         totalAmount: quotation.finalTotal || quotation?.GrandTotal,
         advancedAmount: paymentData.amount,
         paymentMode: paymentData.status, // Send selected payment mode
@@ -1104,6 +1104,16 @@ const QuotationDetails = () => {
                     ""
                   )}
                 </td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: "500", color: "#34495e" }}>
+                  Incharge Name
+                </td>
+                <td>{quotation.inchargeName || ""}</td>
+                <td style={{ fontWeight: "500", color: "#34495e" }}>
+                  Incharge phone
+                </td>
+                <td>{quotation.inchargePhone || ""}</td>
               </tr>
             </tbody>
           </Table>

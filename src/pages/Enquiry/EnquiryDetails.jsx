@@ -56,10 +56,12 @@ const EnquiryDetails = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [editQuantity, setEditQuantity] = useState(1);
+  const [inchargeName, setInchargeName] = useState("");
+  const [inchargePhone, setInchargePhone] = useState("");
 
   // const [availableToAdd, setAvailableToAdd] = useState([])
 
-  const gstOptions = [{ value: "18", label: "18%" }];
+  const gstOptions = [{ value: "0", label: "0%" }, { value: "18", label: "18%" }];
 
   useEffect(() => {
     console.log("useeffect");
@@ -385,6 +387,8 @@ const EnquiryDetails = () => {
           address: enquiry.address,
           labourecharge: Number(manpower) || 0,
           transportcharge: Number(transport) || 0,
+          inchargeName: inchargeName || "",
+          inchargePhone: inchargePhone || "",
           placeaddress: enquiry.placeaddress || "",
           slots: enquiry.slots || [
             {
@@ -474,7 +478,6 @@ const EnquiryDetails = () => {
   //   }
   // };
 
- 
   const handleAddProduct = async () => {
     if (!selectedAddProduct) return;
 
@@ -548,13 +551,14 @@ const EnquiryDetails = () => {
     setAddProductId("");
     setAddQty(1);
   };
-  
 
-  const subtotal = totalAmount + Number(manpower || 0) + Number(transport || 0);
-  const discountAmt = subtotal * (Number(discount || 0) / 100);
-  const afterDiscount = subtotal - discountAmt;
-  const gstAmt = afterDiscount * (Number(gst || 0) / 100);
-  const grandTotal = Math.round(afterDiscount + gstAmt + Number(roundOff || 0));
+
+  // const subtotal = totalAmount + Number(manpower || 0) + Number(transport || 0);
+  const discountAmt = totalAmount * (Number(discount || 0) / 100);
+  const totalBeforeCharges = totalAmount - discountAmt;
+  const totalAfterCharges = totalBeforeCharges + Number(manpower || 0) + Number(transport || 0);
+  const gstAmt = totalAfterCharges * (Number(gst || 0) / 100);
+  const grandTotal = Math.round(totalAfterCharges + gstAmt + Number(roundOff || 0));
 
   const isAnyProductInsufficient = filteredProducts.some((p) => {
     const stock =
@@ -941,8 +945,8 @@ const EnquiryDetails = () => {
                 value={
                   addProductId
                     ? availableToAdd
-                        ?.map((p) => ({ value: p._id, label: p.ProductName }))
-                        .find((opt) => opt.value === Number(addProductId))
+                      ?.map((p) => ({ value: p._id, label: p.ProductName }))
+                      .find((opt) => opt.value === Number(addProductId))
                     : null
                 }
                 onChange={(selected) => {
@@ -988,9 +992,8 @@ const EnquiryDetails = () => {
                   <Form.Label>Price</Form.Label>
                   <Form.Control
                     type="text"
-                    value={`₹${
-                      selectedAddProduct ? selectedAddProduct.ProductPrice : 0
-                    }`}
+                    value={`₹${selectedAddProduct ? selectedAddProduct.ProductPrice : 0
+                      }`}
                     disabled
                   />
                 </Form.Group>
@@ -1002,10 +1005,9 @@ const EnquiryDetails = () => {
                     type="text"
                     value={
                       selectedAddProduct
-                        ? `₹${
-                            (addQty ? addQty : 1) *
-                            selectedAddProduct.ProductPrice
-                          }`
+                        ? `₹${(addQty ? addQty : 1) *
+                        selectedAddProduct.ProductPrice
+                        }`
                         : "₹0"
                     }
                     disabled
@@ -1135,7 +1137,41 @@ const EnquiryDetails = () => {
                   />
                 </Form.Group>
               </Col>
-              {/* <Col md={3}>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Incharge Name </Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={
+                      enquiry?.status === "sent"
+                        ? enquiry.quotationData.inchargeName
+                        : inchargeName
+                    }
+                    onChange={(e) => setInchargeName(e.target.value)}
+                    disabled={enquiry?.status === "sent"}
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Incharge Phone (opt.)</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={
+                      enquiry?.status === "sent"
+                        ? enquiry.quotationData.inchargePhone
+                        : inchargePhone
+                    }
+                    onChange={(e) => setInchargePhone(e.target.value)}
+                    disabled={enquiry?.status === "sent"}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* <Col md={3}>
                 <Form.Group>
                   <Form.Label>Round off</Form.Label>
                   <Form.Control
@@ -1150,7 +1186,6 @@ const EnquiryDetails = () => {
                   />
                 </Form.Group>
               </Col> */}
-            </Row>
           </Form>
         </Container>
       </div>

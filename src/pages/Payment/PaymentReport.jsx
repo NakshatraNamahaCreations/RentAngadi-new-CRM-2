@@ -8,6 +8,8 @@ import Pagination from "../../components/Pagination";
 import axios from "axios";
 import { ApiURL } from "../../api";
 import { toast } from "react-hot-toast";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const itemsPerPage = 10;
 
@@ -19,8 +21,8 @@ const PaymentReport = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const today = moment().format("YYYY-MM-DD");
-  const twoMonthsAgo = moment().subtract(2, "months").format("YYYY-MM-DD");
+  const today = moment().format("DD-MM-YYYY");
+  const twoMonthsAgo = moment().subtract(2, "months").format("DD-MM-YYYY");
 
   // Fetch payments on mount and when filters change
   useEffect(() => {
@@ -50,19 +52,24 @@ const PaymentReport = () => {
         .toLowerCase()
         .includes(query) ||
       String(payment.totalAmount || payment.grandTotal || "").includes(query) ||
-      String(payment.advancedAmount || payment.advanceAmount || "").includes(
-        query
-      ) ||
+      String(payment.advancedAmount || payment.advanceAmount || "").includes(query) ||
       (payment.paymentMode || "").toLowerCase().includes(query) ||
       (payment.paymentStatus || payment.status || "")
         .toLowerCase()
         .includes(query);
 
-    // Use createdAt or paymentDate
+    // Get the payment date from either createdAt or paymentDate
     const paymentDate = payment.createdAt || payment.paymentDate;
-    const inDateRange =
-      (!fromDate || new Date(paymentDate) >= new Date(fromDate)) &&
-      (!toDate || new Date(paymentDate) <= new Date(toDate));
+    if (!paymentDate) return false;
+
+    // Format the payment date to match the input format
+    const paymentDateMoment = moment(paymentDate);
+    const formattedPaymentDate = paymentDateMoment.format("DD-MM-YYYY");
+
+    // Check if payment date is within the selected range
+    const inDateRange = 
+      (!fromDate || moment(formattedPaymentDate, "DD-MM-YYYY").isSameOrAfter(moment(fromDate, "DD-MM-YYYY"))) &&
+      (!toDate || moment(formattedPaymentDate, "DD-MM-YYYY").isSameOrBefore(moment(toDate, "DD-MM-YYYY")));
 
     return isMatch && inDateRange;
   });
@@ -162,27 +169,33 @@ const PaymentReport = () => {
           style={{ width: "300px", fontSize: "12px", marginBottom: "10px" }}
         />
         <div className="d-flex gap-2">
-          <Form.Control
-            type="date"
-            value={fromDate}
-            min={twoMonthsAgo}
-            max={today}
-            onChange={(e) => setFromDate(e.target.value)}
-            size="sm"
-            style={{ fontSize: "12px" }}
+          <DatePicker
+            selected={fromDate}
+            onChange={(date) => setFromDate(date)}
+            // selectsStart
+            // startDate={fromDate}
+            // endDate={toDate}
+            // minDate={twoMonthsAgo}
+            // maxDate={today}
+            placeholderText="From Date"
+            className="form-control form-control-sm"
+            dateFormat="dd-MM-yyyy"
           />
-          <Form.Control
-            type="date"
-            value={toDate}
-            min={twoMonthsAgo}
-            max={today}
-            onChange={(e) => setToDate(e.target.value)}
-            size="sm"
-            style={{ fontSize: "12px" }}
+          <DatePicker
+            selected={toDate}
+            onChange={(date) => setToDate(date)}
+            // selectsEnd
+            // startDate={fromDate}
+            // endDate={toDate}
+            // minDate={fromDate || twoMonthsAgo}
+            // maxDate={today}
+            placeholderText="To Date"
+            className="form-control form-control-sm"
+            dateFormat="dd-MM-yyyy"
           />
         </div>
 
-      
+
       </div>
 
       {/* Payment Table */}
@@ -208,7 +221,8 @@ const PaymentReport = () => {
                   />
                 </th>
                 <th>Payment Date</th>
-                <th>Payment ID</th>
+                {/* <th>Payment ID</th> */}
+                <th>Company name</th>
                 <th>Quotation ID</th>
                 <th>Grand Total</th>
                 <th>Advance Amount</th>
@@ -231,10 +245,11 @@ const PaymentReport = () => {
                     </td>
                     <td style={{ fontSize: "12px" }}>
                       {moment(payment.createdAt || payment.paymentDate).format(
-                        "MM/DD/YYYY hh:mm A"
+                        "DD/MM/YYYY hh:mm A"
                       )}
                     </td>
-                    <td style={{ fontSize: "12px" }}>{id}</td>
+                    {/* <td style={{ fontSize: "12px" }}>{id}</td> */}
+                    <td style={{ fontSize: "12px" }}>{payment?.companyName}</td>
                     <td style={{ fontSize: "12px" }}>
                       {payment.quotationId?.quoteId ||
                         payment.quotationId ||
@@ -250,7 +265,7 @@ const PaymentReport = () => {
                     <td style={{ fontSize: "12px" }}>
                       {payment.paymentStatus || payment.status || "Confirm"}
                     </td>
-                     <td style={{ fontSize: "12px" }}>
+                    <td style={{ fontSize: "12px" }}>
                       {payment.comment || "N/A"}
                     </td>
                   </tr>

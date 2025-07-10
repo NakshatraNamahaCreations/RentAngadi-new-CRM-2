@@ -398,6 +398,8 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import Pagination from "../../components/Pagination";
 import axios from "axios";
 import { ApiURL } from "../../api";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const localizer = momentLocalizer(moment);
 
@@ -558,19 +560,33 @@ const Orders = () => {
             {viewMode === "list" && (
               <>
                 <div className="col-md-3 mb-3 mb-md-0">
-                  <Form.Control
+                  {/* <Form.Control
                     type="date"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
                     size="sm"
+                  /> */}
+                  <DatePicker
+                    selected={fromDate}
+                    onChange={(date) => setFromDate(date)}
+                    placeholderText="From Date"
+                    className="form-control form-control-sm"
+                    dateFormat="dd-MM-yyyy"
                   />
                 </div>
                 <div className="col-md-3 mb-3 mb-md-0">
-                  <Form.Control
+                  {/* <Form.Control
                     type="date"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                     size="sm"
+                  /> */}
+                  <DatePicker
+                    selected={toDate}
+                    onChange={(date) => setToDate(date)}
+                    placeholderText="To Date"
+                    className="form-control form-control-sm"
+                    dateFormat="dd-MM-yyyy"
                   />
                 </div>
               </>

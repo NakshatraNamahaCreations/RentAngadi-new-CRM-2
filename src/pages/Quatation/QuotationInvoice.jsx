@@ -87,6 +87,10 @@ const QuotationInvoice = () => {
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteDate}</td>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.endDate}</td>
             </tr>
+            {/* <tr>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargeName || "N/A"}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargePhone</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargePhone || "N/A"}</td>
+            </tr> */}
             <tr>
               {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.additionalLogisticsSupport}</td> */}
             </tr>
