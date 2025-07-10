@@ -75,7 +75,7 @@ const Master = () => {
             // padding: "10px",
             transition: "all 0.3s ease",
             borderRadius: "8px",
-            backgroundColor: activeTab === "category" ? "#323D4F" : "transparent",
+            backgroundColor: activeTab === "category" ? "#BD5525" : "transparent",
             color: activeTab === "category" ? "#fff" : "#323D4F",
             borderColor: "#ccc", // Light border for inactive tabs
           }}
@@ -90,7 +90,7 @@ const Master = () => {
             // padding: "10px",
             transition: "all 0.3s ease",
             borderRadius: "8px",
-            backgroundColor: activeTab === "subcategory" ? "#323D4F" : "transparent",
+            backgroundColor: activeTab === "subcategory" ? "#BD5525" : "transparent",
             color: activeTab === "subcategory" ? "#fff" : "#323D4F",
             borderColor: "#ccc", // Light border for inactive tabs
           }}

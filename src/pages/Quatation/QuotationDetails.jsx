@@ -1087,6 +1087,16 @@ const QuotationDetails = () => {
                 <td>{quotation.endDate || ""}</td>
               </tr>
               <tr>
+                <td style={{ fontWeight: "500", color: "#34495e" }}>
+                  Incharge Name
+                </td>
+                <td>{quotation.inchargeName || ""}</td>
+                <td style={{ fontWeight: "500", color: "#34495e" }}>
+                  Incharge phone
+                </td>
+                <td>{quotation.inchargePhone || ""}</td>
+              </tr>
+              <tr>
                 {/* <td style={{ fontWeight: "500", color: "#34495e" }}>Address</td>
                 <td>{quotation.address || ""}</td> */}
                 <td style={{ fontWeight: "500", color: "#34495e" }}>Status</td>
@@ -1104,16 +1114,6 @@ const QuotationDetails = () => {
                     ""
                   )}
                 </td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: "500", color: "#34495e" }}>
-                  Incharge Name
-                </td>
-                <td>{quotation.inchargeName || ""}</td>
-                <td style={{ fontWeight: "500", color: "#34495e" }}>
-                  Incharge phone
-                </td>
-                <td>{quotation.inchargePhone || ""}</td>
               </tr>
             </tbody>
           </Table>

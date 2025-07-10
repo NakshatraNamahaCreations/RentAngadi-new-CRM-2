@@ -185,6 +185,12 @@ const InventoryProduct = () => {
             variant="success"
             size="sm"
             // className="w-100"
+            style={{
+              backgroundColor: "#BD5525",
+              border: "none",
+              color: "white",
+              transition: "background 0.2s",
+            }}          
             onClick={handleFetchInventory}
           >
             Fetch Filtered Inventory
@@ -192,6 +198,12 @@ const InventoryProduct = () => {
           <Button
             variant="success"
             size="sm"
+            style={{
+              backgroundColor: "#BD5525",
+              border: "none",
+              color: "white",
+              transition: "background 0.2s",
+            }}          
             // className="w-100"
             onClick={handleExport}
           >

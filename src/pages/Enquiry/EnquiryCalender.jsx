@@ -58,7 +58,7 @@ const EnquiryCalender = () => {
   // Color events
   const eventStyleGetter = (event) => ({
     style: {
-      backgroundColor: "#323D4F",
+      backgroundColor: "#BD5525",
       color: "white",
       borderRadius: "4px",
       border: "none",

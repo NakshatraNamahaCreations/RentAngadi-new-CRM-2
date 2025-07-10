@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 
 const ClientReports = () => {
     const [clients, setClients] = useState([]);
-    const [clientMap, setClientMap] = useState({}); 
+    const [clientMap, setClientMap] = useState({});
     const [selectedClients, setSelectedClients] = useState([]);
     const [deliveryDate, setDeliveryDate] = useState(null);
     const [dismantleDate, setDismantleDate] = useState(null);
@@ -140,7 +140,7 @@ const ClientReports = () => {
                             variant="primary"
                             onClick={fetchReport}
                             disabled={loading || !selectedClients.length || !deliveryDate || !dismantleDate}
-                            style={{ width: '100%' }}
+                            style={{ width: '100%', backgroundColor: "#BD5525", border: "#BD5525", }}
                         >
                             {loading ? 'Loading...' : 'Generate Report'}
                         </Button>

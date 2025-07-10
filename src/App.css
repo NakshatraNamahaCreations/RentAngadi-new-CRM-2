@@ -4,6 +4,11 @@
   /* border: 1px solid #ccc;  */
 }
 
+.custom-bg {
+  background-color: #F0E9EB !important;
+  color: #000 !important; /* Optional: override text color if needed */
+}
+
 .dropdown-icon {
   position: absolute;
   right: 10px;
@@ -175,17 +180,17 @@
 .card-hover {
   transition: background 0.4s ease, transform 0.3s ease, color 0.3s ease;
   background-color: #fff;
-  color: #323D4F;
+  color: #BD5525;
 }
 
 .card-hover .icon,
 .card-hover h6,
 .card-hover p {
-  color: #323D4F;
+  color: #BD5525;
 }
 
 .card-hover:hover {
-  background-color: #323D4F;
+  background-color: #BD5525;
   transform: scale(1.03);
   color: #fff;
 }

@@ -72,7 +72,7 @@ const Invoice = () => {
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
     const days = productDays[item.productId] || 1; // Get days for each product
-    return sum + (item.total || 0) * days; // Multiply total by days for each product
+    return sum + (item.total || 0); // Multiply total by days for each product
   }, 0);
 
   const discountAmt = (subtotal * discount) / 100;
@@ -303,7 +303,7 @@ const Invoice = () => {
                 <td className="text-center">{item.quantity || "-"}</td>
                 <td className="text-center">₹{item.ProductPrice}</td>
                 <td className="text-center">{days}</td>
-                <td>₹{(item.total * days).toFixed(2)}</td>
+                <td>₹{(item.total).toFixed(2)}</td>
               </tr>
             );
           })}

@@ -10,6 +10,8 @@ import { ApiURL } from "../../api";
 import { toast } from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Modal } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css"; // usually in index.js
 
 const itemsPerPage = 10;
 
@@ -24,6 +26,8 @@ const PaymentReport = () => {
   const today = moment().format("DD-MM-YYYY");
   const twoMonthsAgo = moment().subtract(2, "months").format("DD-MM-YYYY");
 
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showSlipModal, setShowSlipModal] = useState(false);
   // Fetch payments on mount and when filters change
   useEffect(() => {
     fetchPayments();
@@ -67,7 +71,7 @@ const PaymentReport = () => {
     const formattedPaymentDate = paymentDateMoment.format("DD-MM-YYYY");
 
     // Check if payment date is within the selected range
-    const inDateRange = 
+    const inDateRange =
       (!fromDate || moment(formattedPaymentDate, "DD-MM-YYYY").isSameOrAfter(moment(fromDate, "DD-MM-YYYY"))) &&
       (!toDate || moment(formattedPaymentDate, "DD-MM-YYYY").isSameOrBefore(moment(toDate, "DD-MM-YYYY")));
 
@@ -150,6 +154,12 @@ const PaymentReport = () => {
     saveAs(file, "Payment_Report.xlsx");
   };
 
+  const handleViewPayment = (payment) => {
+    setSelectedPayment(payment);
+    setShowSlipModal(true);
+  };
+
+  // Date picker effect
   // Date filter effect
   useEffect(() => {
     setCurrentPage(1);
@@ -223,12 +233,12 @@ const PaymentReport = () => {
                 <th>Payment Date</th>
                 {/* <th>Payment ID</th> */}
                 <th>Company name</th>
-                <th>Quotation ID</th>
+                {/* <th>Quotation ID</th> */}
                 <th>Grand Total</th>
                 <th>Advance Amount</th>
                 <th>Payment Mode</th>
                 <th>Status</th>
-                <th>Comments</th>
+                {/* <th>Comments</th> */}
               </tr>
             </thead>
             <tbody>
@@ -250,11 +260,11 @@ const PaymentReport = () => {
                     </td>
                     {/* <td style={{ fontSize: "12px" }}>{id}</td> */}
                     <td style={{ fontSize: "12px" }}>{payment?.companyName}</td>
-                    <td style={{ fontSize: "12px" }}>
+                    {/* <td style={{ fontSize: "12px" }}>
                       {payment.quotationId?.quoteId ||
                         payment.quotationId ||
                         "N/A"}
-                    </td>
+                    </td> */}
                     <td style={{ fontSize: "12px" }}>
                       {payment.totalAmount || payment.grandTotal}
                     </td>
@@ -265,8 +275,17 @@ const PaymentReport = () => {
                     <td style={{ fontSize: "12px" }}>
                       {payment.paymentStatus || payment.status || "Confirm"}
                     </td>
+                    {/* <td style={{ fontSize: "12px" }}>
+                      {payment.comment ? payment.comment.slice(0, 20) + (payment.comment.length > 20 ? '...' : '') : "N/A"}
+                    </td> */}
                     <td style={{ fontSize: "12px" }}>
-                      {payment.comment || "N/A"}
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => handleViewPayment(payment)}
+                      >
+                        View
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -279,6 +298,33 @@ const PaymentReport = () => {
                 </tr>
               )}
             </tbody>
+            <Modal show={showSlipModal} onHide={() => setShowSlipModal(false)} centered>
+  <Modal.Header closeButton>
+    <Modal.Title>Payment Slip</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    {selectedPayment && (
+      <div style={{ fontSize: "14px" }}>
+        <p><strong>Date:</strong> {moment(selectedPayment.createdAt).format("DD/MM/YYYY hh:mm A")}</p>
+        <p><strong>Company:</strong> {selectedPayment.companyName}</p>
+        <p><strong>Quotation ID:</strong> {selectedPayment.quotationId}</p>
+        <p><strong>Total Amount:</strong> ₹{selectedPayment.totalAmount}</p>
+        <p><strong>Advanced Paid:</strong> ₹{selectedPayment.advancedAmount}</p>
+        <p><strong>Balance:</strong> ₹{selectedPayment.totalAmount - selectedPayment.advancedAmount}</p>
+        <p><strong>Payment Mode:</strong> {selectedPayment.paymentMode}</p>
+        <p><strong>Remarks:</strong> {selectedPayment.paymentRemarks}</p>
+        <p><strong>Comment:</strong> {selectedPayment.comment || "N/A"}</p>
+        <p><strong>Status:</strong> {selectedPayment.status || "N/A"}</p>
+      </div>
+    )}
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowSlipModal(false)}>
+      Close
+    </Button>
+  </Modal.Footer>
+</Modal>
+
           </Table>
         </div>
         <Pagination

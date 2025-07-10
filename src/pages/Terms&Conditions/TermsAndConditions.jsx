@@ -519,8 +519,8 @@ const TermsAndConditions = () => {
             style={{
               fontSize: "12px",
               padding: "6px 12px",
-              background: "#5c6bc0",
-              borderColor: "#5c6bc0",
+              background: "#BD5525",
+              borderColor: "#BD5525",
             }}
           >
             + Add Terms and Conditions

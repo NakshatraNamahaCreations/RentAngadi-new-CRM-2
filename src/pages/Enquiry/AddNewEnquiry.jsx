@@ -184,24 +184,24 @@ const AddNewEnquiry = () => {
   //   );
   // };
   // Handle product dropdown open/close
-  
-  const handleQtyChange = (id, qty) => {
-  // Directly update the quantity without replacing or restricting characters
-  let val = qty;
 
-  // Update the selected products with the new quantity and total
-  setSelectedProducts((prev) =>
-    prev.map((p) =>
-      p.id === id || p._id === id
-        ? {
+  const handleQtyChange = (id, qty) => {
+    // Directly update the quantity without replacing or restricting characters
+    let val = qty;
+
+    // Update the selected products with the new quantity and total
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.id === id || p._id === id
+          ? {
             ...p,
             qty: val,  // Directly set the value entered by the user
             total: (parseFloat(val) || 0) * (p.ProductPrice || p.price), // Use parseFloat to handle decimals if needed
           }
-        : p
-    )
-  );
-};
+          : p
+      )
+    );
+  };
 
   const handleProductDropdown = (open) => {
     setShowProductDropdown(open);
@@ -341,7 +341,7 @@ const AddNewEnquiry = () => {
                     <Button
                       size="sm"
                       style={{
-                        backgroundColor: "#323D4F",
+                        backgroundColor: "#BD5525",
                         border: "none",
                         width: "100%",
                         transition: "background 0.2s",
@@ -488,8 +488,8 @@ const AddNewEnquiry = () => {
                                 p.img
                                   ? p.img
                                   : p.ProductIcon
-                                  ? `${ImageApiURL}/product/${p.ProductIcon}`
-                                  : "https://via.placeholder.com/36x28?text=No+Img"
+                                    ? `${ImageApiURL}/product/${p.ProductIcon}`
+                                    : "https://via.placeholder.com/36x28?text=No+Img"
                               }
                               alt={p.name || p.ProductName}
                               style={{
@@ -689,7 +689,7 @@ const AddNewEnquiry = () => {
                 <Button
                   size="sm"
                   style={{
-                    backgroundColor: "#323D4F",
+                    backgroundColor: "#BD5525",
                     border: "none",
                     transition: "background 0.2s",
                   }}

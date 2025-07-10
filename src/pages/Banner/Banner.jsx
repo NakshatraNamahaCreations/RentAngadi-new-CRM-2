@@ -156,8 +156,8 @@ const filteredBanners = banners.filter((banner) =>
             className="fw-semibold"
             style={{
               fontSize: "12px",
-              background: "#5c6bc0",
-              borderColor: "#5c6bc0",
+              background: "#BD5525",
+              borderColor: "#BD5525",
             }}
           >
             + Add Banner

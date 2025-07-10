@@ -196,9 +196,10 @@ const EnquiryDetails = () => {
   // console.log(`alprods : `, allProducts);
   console.log("enquiry: ", enquiry);
   console.log("filtered prods: ", filteredProducts);
-  const clientNo = enquiry?.clientDetails?.executives?.map(
-    (exec) => exec.phoneNumber
-  );
+  const clientNo = enquiry?.clientDetails?.executives?.find(
+    (exec) => exec.name === enquiry.executivename
+  )?.phoneNumber || "N/A";
+
   console.log(`clietnno:  `, clientNo);
   const dateFormat = (dateStr) => {
     const date = new Date(dateStr);
@@ -683,7 +684,7 @@ const EnquiryDetails = () => {
               <Button
                 size="sm"
                 style={{
-                  backgroundColor: "#323D4F",
+                  backgroundColor: "#BD5525",
                   border: "none",
                   transition: "background 0.2s",
                 }}
@@ -1158,7 +1159,7 @@ const EnquiryDetails = () => {
                 <Form.Group>
                   <Form.Label>Incharge Phone (opt.)</Form.Label>
                   <Form.Control
-                    type="text"
+                    type="number"
                     value={
                       enquiry?.status === "sent"
                         ? enquiry.quotationData.inchargePhone
@@ -1220,7 +1221,7 @@ const EnquiryDetails = () => {
                 <Button
                   variant="success"
                   size="sm"
-                  style={{ fontWeight: 600 }}
+                  style={{ fontWeight: 600, background: "#BD5525", border: "#BD5525" }}
                   disabled={totalAmount === 0 || isAnyProductInsufficient}
                   onClick={handleCreateQuote}
                 >

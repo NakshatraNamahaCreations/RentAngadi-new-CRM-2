@@ -153,7 +153,7 @@ const ProductReports = () => {
               variant="primary"
               onClick={fetchReport}
               disabled={loading || !selectedYear || !selectedMonth}
-              style={{ width: '100%' }}
+              style={{ width: '100%', background: "#BD5525", border: "#BD5525" }}
             >
               {loading ? 'Loading...' : 'Generate Report'}
             </Button>
@@ -170,11 +170,11 @@ const ProductReports = () => {
                 Revenue {getSortIcon('totalRevenue')}
               </th>
               <th onClick={() => handleSort('price')} style={{ width: '15%' }}>
-                Price {getSortIcon('price')}
+                Unit Price {getSortIcon('price')}
               </th>
-              <th onClick={() => handleSort('quantity')} style={{ width: '10%' }}>
+              {/* <th onClick={() => handleSort('quantity')} style={{ width: '10%' }}>
                 Quantity {getSortIcon('quantity')}
-              </th>
+              </th> */}
               {/* <th onClick={() => handleSort('days')} style={{ width: '10%' }}>
                 Days {getSortIcon('days')}
               </th> */}
@@ -188,7 +188,7 @@ const ProductReports = () => {
                     <td style={{ width: '40%' }}>{product.name}</td>
                     <td style={{ width: '15%' }}>₹{product.totalRevenue.toLocaleString()}</td>
                     <td style={{ width: '15%' }}>₹{product.price.toLocaleString()}</td>
-                    <td style={{ width: '10%' }}>{product.quantity}</td>
+                    {/* <td style={{ width: '10%' }}>{product.quantity}</td> */}
                     {/* <td style={{ width: '10%' }}>{product.days}</td> */}
                   </tr>
                 ))}

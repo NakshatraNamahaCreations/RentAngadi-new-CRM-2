@@ -111,7 +111,14 @@ const DamagedProductList = () => {
           <h4>Damaged/Lost Products</h4>
         </Col>
         <Col className="text-end">
-          <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          <Button variant="primary" 
+          style={{
+            backgroundColor: "#BD5525",
+            border: "none",
+            color: "white",
+            transition: "background 0.2s",
+          }}
+          onClick={() => setShowAddModal(true)}>
             <FaPlus className="me-2" />Add Damaged/Lost Product
           </Button>
         </Col>

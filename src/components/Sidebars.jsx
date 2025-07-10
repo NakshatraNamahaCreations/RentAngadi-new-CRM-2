@@ -171,7 +171,8 @@ import {
   MdInventory,
   MdOutlineSupportAgent,
 } from "react-icons/md";
-import logo from "../assets/RentangadiLogo1.png";
+import logo from "../assets/RentangadiLogo5.png";
+// import logo from "../assets/RentangadiLogo2.svg";
 
 const Sidebars = () => {
   const location = useLocation();
@@ -272,7 +273,7 @@ const Sidebars = () => {
       icon: FaChartLine,
     },
     {
-      name: "Damaged",
+      name: "Damaged/Lost",
       path: "/damaged-products",
       icon: FaChartBar,
     }
@@ -288,28 +289,29 @@ const Sidebars = () => {
       style={{
         width: "20%",
         zIndex: 1,
-        background: "#323D4F",
+        // background: "#323D4F",
+        background: '#BD5525',
         overflowY: "auto",
         overflowX: "hidden",
       }}
     >
-      <div className="w-100 d-flex justify-content-center">
-        <Link to="/dashboard">
-          <img
-            src={logo}
-            alt="logo"
-            style={{ width: "120px" }}
-            className="mx-auto"
-          />
-        </Link>
-      </div>
+      <div className="w-100 d-flex justify-content-center" style={{ backgroundColor: "black" }}>
+  <Link to="/dashboard">
+    <img
+      src={logo}
+      alt="logo"
+      style={{ width: "200px" }}
+      className="mx-auto"
+    />
+  </Link>
+</div>
 
       <ul className="nav flex-column mt-2">
         {menuItems.map((item, index) => (
           <li key={index} className="nav-item my-1">
             <Link
               to={item.path}
-              className={`${isActiveLink(item.path) ? "bg-dark text-dark" : ""
+              className={`${isActiveLink(item.path) ? "custom-bg" : ""
                 } nav-link d-flex align-items-center text-white`}
             >
               <item.icon className="me-2" />

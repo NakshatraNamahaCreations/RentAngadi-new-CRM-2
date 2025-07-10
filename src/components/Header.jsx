@@ -281,7 +281,7 @@ const Header = () => {
     } else if (matchPath("/payment-report", path)) {
       setCurrentTab("Payment Report");
     } else if (matchPath("/refurbihsment-report", path)) {
-      setCurrentTab("Refurbihsment Report");
+      setCurrentTab("Refurbishment Report");
     } else if (matchPath("/refurbishment-invoice/:id", path)) {
       setCurrentTab("Refurbihsment Invoice");
     } else if (matchPath("/inventory-product-list", path)) {

@@ -108,7 +108,7 @@ const EnquiryList = () => {
           <Button
             size="sm"
             style={{
-              backgroundColor: "#323D4F",
+              backgroundColor: "#BD5525",
               border: "none",
               transition: "background 0.2s",
             }}

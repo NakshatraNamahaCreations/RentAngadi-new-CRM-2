@@ -762,7 +762,7 @@ const OrderDetails = () => {
     const productTotal = (order?.slots[0]?.products || []).reduce((sum, item) => {
       // console.log("item: ", item);
       const days = productDays[item.productId] || 1; // Get days for each product
-      return sum + (item.total || 0) * days; // Multiply total by days for each product
+      return sum + (item.total || 0); // Multiply total by days for each product
     }, 0);
 
     // console.log("order.slots.prods: ", order.slots[0].products)
@@ -1161,6 +1161,7 @@ const OrderDetails = () => {
                                     order && order.orderStatus === "cancelled"
                                   }
                                 />
+                                {console.log("end date: ", productDates[prod.productId])}
                                 <DatePicker
                                   selected={
                                     productDates[prod.productId]
@@ -1308,7 +1309,7 @@ const OrderDetails = () => {
                         </td>
                         <td>{days}</td>
                         <td>₹{(prod.ProductPrice)}</td>
-                        <td>₹{prod.total * days}</td>
+                        <td>₹{prod.total}</td>
                         {!pdfMode && (
                           <td>
                             {editIdx === idx ? (
