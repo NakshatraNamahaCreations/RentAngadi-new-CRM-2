@@ -35,6 +35,8 @@ import QuotationInvoice from "./pages/Quatation/QuotationInvoice.jsx";
 import ClientReports from "./pages/reports/ClientReports ";
 import Reports from "./pages/reports/Reports";
 import DamagedProductList from "./pages/Product/DamagedProductList.jsx";
+import AdminRights from "./pages/Admin/AdminRights.jsx";
+import AdminDetails from "./pages/Admin/AdminDetails.jsx";
 
 function App() {
   // Use state to trigger re-render on login/logout
@@ -47,13 +49,21 @@ function App() {
     return () => window.removeEventListener("storage", syncLogin);
   }, []);
 
-  const handleLogin = () => {
-    sessionStorage.setItem("isLoggedIn", true);
-    setIsLoggedIn(true);
+  const handleLogin = (roles) => {
+    try {
+      const rolesString = JSON.stringify(roles);
+      sessionStorage.setItem("isLoggedIn", true);
+      sessionStorage.setItem("roles", rolesString);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error("Error storing roles:", error);
+      // Handle error appropriately
+    }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("roles");
     setIsLoggedIn(false);
   };
 
@@ -61,9 +71,19 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       {isLoggedIn ? (
-        <Layout handleLogout={handleLogout}>
+        <Layout handleLogout={handleLogout} roles={(() => {
+          try {
+            const rolesString = sessionStorage.getItem('roles');
+            return rolesString ? JSON.parse(rolesString) : {};
+          } catch (error) {
+            console.error("Error parsing roles:", error);
+            return {};
+          }
+        })()}>
           <Routes>
             {/* <Route path="/" element={<Dashboard />} /> */}
+            <Route path="/admin-rights" element={<AdminRights />} />
+            <Route path="/admin-details/:id" element={<AdminDetails />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/master" element={<Master />} />
             <Route path="/banner" element={<Banner />} />

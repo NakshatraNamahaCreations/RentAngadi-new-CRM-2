@@ -369,6 +369,7 @@ const EnquiryDetails = () => {
         data: {
           enquiryObjectId: enquiry._id,
           enquiryId: enquiry.enquiryId,
+          userId: enquiry.userId,
           quoteTime: enquiry.enquiryTime,
           quoteDate: enquiry.enquiryDate,
           endDate: enquiry.endDate,

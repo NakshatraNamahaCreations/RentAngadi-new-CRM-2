@@ -25,6 +25,28 @@ const AddClient = () => {
   const [executives, setExecutives] = useState([{ name: "", phone: "" }]);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [phoneErrors, setPhoneErrors] = useState([]);
+
+  // Phone number validation function
+  const validatePhone = (phone) => {
+    // const phoneRegex = /^\d{10}$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  };
+
+  // Real-time phone number validation
+  const validatePhoneInput = (index, phone) => {
+    const isValid = validatePhone(phone);
+    const currentErrors = [...phoneErrors];
+
+    if (isValid) {
+      currentErrors[index] = null;
+    } else {
+      currentErrors[index] = "Phone number must be exactly 10 digits & must start with 6-9";
+    }
+    setPhoneErrors(currentErrors);
+    return isValid;
+  };
 
   const handleClientChange = (e) => {
     const { name, value } = e.target;
@@ -50,6 +72,19 @@ const AddClient = () => {
     e.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
+
+    // Validate contact person number
+    if (!validatePhone(client.contactPersonNumber)) {
+      setErrorMessage("Invalid contact person phone number");
+      return;
+    }
+
+    // Validate all executive phone numbers
+    const invalidPhones = executives.filter((exec, index) => !validatePhone(exec.phone));
+    if (invalidPhones.length > 0) {
+      setErrorMessage("Invalid phone number(s) in executives");
+      return;
+    }
 
     // Prepare data for API
     const payload = {
@@ -79,6 +114,7 @@ const AddClient = () => {
           navigate("/client");
         });
       } else {
+        console.error("error adding client: ", res.data)
         setErrorMessage("Failed to add client. Please try again.");
       }
     } catch (error) {
@@ -135,11 +171,18 @@ const AddClient = () => {
                       type="tel"
                       placeholder="Phone Number"
                       value={exec.phone}
-                      onChange={(e) =>
-                        handleExecutiveChange(index, "phone", e.target.value)
-                      }
-                      className="rounded-3 shadow-sm"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        handleExecutiveChange(index, "phone", value);
+                        validatePhoneInput(index, value);
+                      }}
+                      className={`rounded-3 shadow-sm ${phoneErrors[index] ? 'is-invalid' : ''}`}
                     />
+                    {phoneErrors[index] && (
+                      <Form.Text className="text-danger">
+                        {phoneErrors[index]}
+                      </Form.Text>
+                    )}
                   </Col>
                   <Col md={2} className="text-center">
                     {executives.length > 1 && (
@@ -173,7 +216,11 @@ const AddClient = () => {
                 type="tel"
                 name="contactPersonNumber"
                 value={client.contactPersonNumber}
-                onChange={handleClientChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleClientChange(e);
+                  validatePhoneInput(value);
+                }}
                 // required
                 className="rounded-3 shadow-sm"
               />

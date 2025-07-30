@@ -37,9 +37,21 @@ const ProductManagement = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = products.filter((product) =>
-      product.ProductName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = products.filter((product) => {
+      // Split the search query into words
+      const searchWords = searchQuery.toLowerCase().split(' ').filter(word => word.trim());
+      // Split product name into words
+      const productWords = product.ProductName.toLowerCase().split(' ');
+
+      // Check if all search words match either:
+      // 1. As complete words, or
+      // 2. As partial matches at the start of words
+      return searchWords.every(searchWord =>
+        productWords.some(productWord =>
+          productWord === searchWord || productWord.startsWith(searchWord)
+        )
+      );
+    });
     setFilteredProducts(filtered);
     setCurrentPage(1);
   }, [searchQuery, products]);

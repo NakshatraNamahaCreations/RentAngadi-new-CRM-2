@@ -301,6 +301,7 @@ const QuotationDetails = () => {
       // Prepare the order details from quotationDetails
       const orderDetails = {
         quoteId: quotation.quoteId,
+        userId: quotation.userId,
         ClientId: quotation?.clientId,
         clientNo: quotation?.clientNo,
         GrandTotal: quotation.finalTotal || grandTotal,

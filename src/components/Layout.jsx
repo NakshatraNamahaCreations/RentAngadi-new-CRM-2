@@ -2,11 +2,18 @@ import { useState } from "react";
 import Sidebars from "./Sidebars";
 import Header from "./Header";
 
-const Layout = ({ children }) => {
+function Layout({ children, handleLogout, roles }) {
+  // Convert roles object to array of kebab-case keys
+  const userAccess = Object.entries(roles || {}).reduce((acc, [key, value]) => {
+    if (value) {
+      const kebabKey = key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+      acc.push(kebabKey);
+    }
+    return acc;
+  }, []);
 
   return (
     <>
-    
       <div className="d-flex hide-scrollbar ">
         <div className="col-md-2">
           <Sidebars />

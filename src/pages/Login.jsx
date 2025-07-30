@@ -30,7 +30,10 @@ const Login = ({ handleLogin }) => {
       if (response.status === 200) {
         toast.success("Login successful");
         sessionStorage.setItem("token", response.data.token);
-        handleLogin && handleLogin();
+        console.log(`roles: `, response.data.roles);
+        sessionStorage.setItem("roles", JSON.stringify(response.data.roles));
+        console.log(`sessionStorage.getItem("roles"): `, sessionStorage.getItem("roles"));
+        handleLogin && handleLogin(response.data.roles);
         navigate("/dashboard");
       } else {
         toast.error("Login failed");
@@ -85,13 +88,13 @@ const Login = ({ handleLogin }) => {
               width: "60px",
               marginBottom: "18px",
               marginLeft: "-6px",
-              marginInline:"auto"
+              marginInline: "auto"
             }}
           />
-          <h3 style={{ fontWeight: 700, color: "#222", marginBottom:"30px" }}>
+          <h3 style={{ fontWeight: 700, color: "#222", marginBottom: "30px" }}>
             Log In To Your Account
           </h3>
-      
+
           <Form onSubmit={handleSubmit} autoComplete="off">
             <Form.Group className="mb-3" controlId="formBasicEmail">
               <Form.Label style={{ fontWeight: 600, color: "#222" }}>
@@ -179,7 +182,7 @@ const Login = ({ handleLogin }) => {
                 background: "#222",
                 border: "none",
                 letterSpacing: "1px",
-                marginTop:"10px"
+                marginTop: "10px"
               }}
             >
               {loading ? "Logging in..." : "LOG IN"}
