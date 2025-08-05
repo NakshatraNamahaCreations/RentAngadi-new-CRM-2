@@ -195,7 +195,7 @@ const QuotationDetails = () => {
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
-        quotationId: quotation?._id,
+        quotationId: quotation?.quoteId,
         totalAmount: quotation.finalTotal || quotation?.GrandTotal,
         advancedAmount: paymentData.amount,
         paymentMode: paymentData.status, // Send selected payment mode
@@ -298,11 +298,13 @@ const QuotationDetails = () => {
 
   const handleGenerateOrder = async () => {
     try {
+      console.log(`handleGenerateOrder quotation: `, quotation);
       // Prepare the order details from quotationDetails
       const orderDetails = {
         quoteId: quotation.quoteId,
         userId: quotation.userId,
-        ClientId: quotation?.clientId,
+        clientId: quotation?.clientId,
+        executiveId: quotation?.executiveId,
         clientNo: quotation?.clientNo,
         GrandTotal: quotation.finalTotal || grandTotal,
         refurbishmentAmount: quotation?.refurbishment || 0,

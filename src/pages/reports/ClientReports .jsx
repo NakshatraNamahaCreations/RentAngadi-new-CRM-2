@@ -74,6 +74,7 @@ const ClientReports = () => {
                 endDate: dismantleDate
             });
             console.log('fetchReport res data: ', res.data);
+            res.data.sort((a, b) => b.totalGrandTotal - a.totalGrandTotal);
             setReportData(res.data || []);
         } catch (err) {
             setReportData([]);
@@ -150,7 +151,9 @@ const ClientReports = () => {
                     <thead>
                         <tr>
                             <th>Client Name</th>
-                            <th>Total Grand Total</th>
+                            <th>Grand Total</th>
+                            <th>RoundOff Total</th>
+                            <th>Diff</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -158,6 +161,8 @@ const ClientReports = () => {
                             <tr key={row._id}>
                                 <td>{clientMap[row._id] || 'Unknown Client'}</td>
                                 <td>₹{row.totalGrandTotal.toLocaleString()}</td>
+                                <td>₹{row.totalRoundOff.toLocaleString()}</td>
+                                <td>₹{row.totalGrandTotal - row.totalRoundOff}</td>
                             </tr>
                         ))}
                     </tbody>

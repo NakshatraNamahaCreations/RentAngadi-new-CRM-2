@@ -26,6 +26,7 @@ const AddClient = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [phoneErrors, setPhoneErrors] = useState([]);
+  const [clientPhoneErrors, setClientPhoneErrors] = useState("");
 
   // Phone number validation function
   const validatePhone = (phone) => {
@@ -42,9 +43,20 @@ const AddClient = () => {
     if (isValid) {
       currentErrors[index] = null;
     } else {
-      currentErrors[index] = "Phone number must be exactly 10 digits & must start with 6-9";
+      currentErrors[index] = "Phone number must be 10 digits and begin with 6–9 (e.g., 9876543210).";
     }
     setPhoneErrors(currentErrors);
+    return isValid;
+  };
+
+  const validateClientPhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    const isValid = phoneRegex.test(phone);
+    if (!isValid) {
+      setClientPhoneErrors("Phone number must be 10 digits and begin with 6–9 (e.g., 9876543210).");
+    } else {
+      setClientPhoneErrors("");
+    }
     return isValid;
   };
 
@@ -219,11 +231,16 @@ const AddClient = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   handleClientChange(e);
-                  validatePhoneInput(value);
+                  validateClientPhone(value);
                 }}
                 // required
                 className="rounded-3 shadow-sm"
               />
+              {clientPhoneErrors && (
+                <Form.Text className="text-danger">
+                  {clientPhoneErrors}
+                </Form.Text>
+              )}
             </Form.Group>
 
             <Form.Group className="mb-3">

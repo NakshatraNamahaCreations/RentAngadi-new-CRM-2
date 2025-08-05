@@ -9,7 +9,9 @@ import { MdVisibility } from "react-icons/md";
 
 const ProductManagement = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  // Load initial search state from localStorage
+  const savedSearch = localStorage.getItem('productSearchQuery') || "";
+  const [searchQuery, setSearchQuery] = useState(savedSearch);
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -37,11 +39,15 @@ const ProductManagement = () => {
   }, []);
 
   useEffect(() => {
+    // Save search query to localStorage
+    localStorage.setItem('productSearchQuery', searchQuery);
+
     const filtered = products.filter((product) => {
       // Split the search query into words
       const searchWords = searchQuery.toLowerCase().split(' ').filter(word => word.trim());
       // Split product name into words
       const productWords = product.ProductName.toLowerCase().split(' ');
+      const productWordsDesc = product.ProductDesc.toLowerCase().split(' ');
 
       // Check if all search words match either:
       // 1. As complete words, or
@@ -49,11 +55,26 @@ const ProductManagement = () => {
       return searchWords.every(searchWord =>
         productWords.some(productWord =>
           productWord === searchWord || productWord.startsWith(searchWord)
+        ) || productWordsDesc.some(productWordDesc =>
+          productWordDesc === searchWord || productWordDesc.startsWith(searchWord)
         )
       );
     });
     setFilteredProducts(filtered);
     setCurrentPage(1);
+
+    return () => {
+      console.log("cleanup func: ", location.pathname);
+      // Only clear search state when navigating away to a different module
+      if (location.pathname !== '/product-management' &&
+        !location.pathname.startsWith('/product-details/') &&
+        !location.pathname.startsWith('/edit-product/')) {
+        console.log("clearing search state: ", location.pathname);
+
+        setSearchQuery("");
+        localStorage.removeItem('productSearchQuery');
+      }
+    };
   }, [searchQuery, products]);
 
   const handleDeleteProduct = async (id) => {
