@@ -14,7 +14,7 @@ const QuotationInvoice = () => {
   const items = location.state?.items || [];
   const productDates = location.state?.productDates || {};
 
-  console.log(`quotation: `, quotation);
+  console.log(`quotation from state: `, quotation);
 
   if (!quotation) {
     return (
@@ -27,19 +27,19 @@ const QuotationInvoice = () => {
     );
   }
 
-  // // Calculate products total
-  // const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
-  // const transport = Number(quotation.transportcharge || 0);
-  // const manpower = Number(quotation.labourecharge || 0);
-  // const discountPercent = Number(quotation.discount || 0);
-  // const gstPercent = Number(quotation.GST || 0);
+  // Calculate products total
+  const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  const transport = Number(quotation.transportcharge || 0);
+  const manpower = Number(quotation.labourecharge || 0);
+  const discountPercent = Number(quotation.discount || 0);
+  const gstPercent = Number(quotation.GST || 0);
 
-  // // Calculate totals in the new order
-  // const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
-  // const afterDiscount = productsTotal - discountAmt;
-  // const totalWithCharges = afterDiscount + transport + manpower;
-  // const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
-  // const finalTotal = Math.round(totalWithCharges + gstAmt);
+  // Calculate totals in the new order
+  const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+  const afterDiscount = productsTotal - discountAmt;
+  const totalWithCharges = afterDiscount + transport + manpower;
+  const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
+  const finalTotal = Math.round(totalWithCharges + gstAmt);
 
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
@@ -139,7 +139,8 @@ const QuotationInvoice = () => {
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>{quotation?.discount != 0 ? "Total Amount before discount" : "Total amount"}</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {console.log(`quotation?.allProductsTotal: `, quotation?.allProductsTotal)}
+                ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
             {quotation?.discount != 0 && (

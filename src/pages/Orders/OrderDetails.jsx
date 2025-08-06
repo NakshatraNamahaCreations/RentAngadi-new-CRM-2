@@ -1036,7 +1036,7 @@ const OrderDetails = () => {
               <Col xs={12} md={6}>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Client Id:</span>
-                  <span style={valueStyle}>{order.ClientId}</span>
+                  <span style={valueStyle}>{order.clientId}</span>
                 </div>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Company Name: </span>
@@ -1050,12 +1050,10 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Executive Name: </span>
                   <span style={valueStyle}>{order.executivename}</span>
                 </div>
-                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Address: </span>
                   <span style={valueStyle}>{order.placeaddress}</span>
-                </div>
-              </Col>
-              <Col xs={12} md={6}>
+                </div> */}
                 {!pdfMode && (
                   <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                     <span style={labelStyle}>Order Status: </span>
@@ -1066,16 +1064,26 @@ const OrderDetails = () => {
                     </span>
                   </div>
                 )}
+              </Col>
+              <Col xs={12} md={6}>
+                {/* {!pdfMode && ( */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
-                {/* {!pdfMode && ( */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Grand Total: </span>
                   <span style={valueStyle}>₹ {grandTotal}</span>
                 </div>
                 {/* )} */}
+                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>Man power: </span>
+                  <span style={valueStyle}>₹ {order.labourecharge}</span>
+                </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>Transport: </span>
+                  <span style={valueStyle}>₹ {order.transportcharge}</span>
+                </div> */}
                 <div
                   className="mb-1"
                   style={{ display: "flex", gap: "10px", alignItems: "center", lineHeight: "1.2" }}
@@ -1169,7 +1177,7 @@ const OrderDetails = () => {
                     <th>Slot Date</th>
                     <th>Product Name</th>
                     <th>Product img</th>
-                    {!pdfMode && <th>Available Stock</th>}
+                    {!pdfMode && <th>Remaining Stock</th>}
                     <th>Selected Qty</th>
                     <th>Days</th>
                     <th>Price/Qty</th>
@@ -1444,7 +1452,7 @@ const OrderDetails = () => {
                     );
                   })}
                   {console.log(`*** products: `, products)}
-                  {
+                  {/* {
                     (
                       <tr>
                         <td colSpan={6} className="text-end">
@@ -1465,7 +1473,7 @@ const OrderDetails = () => {
                           <strong>₹{order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)}</strong>
                         </td>
                       </tr>
-                    )}
+                    )} */}
                 </tbody>
               </Table>
             </div>

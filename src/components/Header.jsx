@@ -240,8 +240,8 @@ const Header = () => {
       setCurrentTab("Master");
     } else if (matchPath("/banner", path)) {
       setCurrentTab("Banner");
-    } else if (matchPath("/prdoduct-management", path)) {
-      setCurrentTab("Prdoduct Management");
+    } else if (matchPath("/product-management", path)) {
+      setCurrentTab("Product Management");
     } else if (matchPath("/add-product", path)) {
       setCurrentTab("Add Product");
     } else if (matchPath("/edit-product/:id", path)) {
@@ -249,7 +249,7 @@ const Header = () => {
     } else if (matchPath("/product-details/:id", path)) {
       setCurrentTab("Product Details");
     } else if (matchPath("/client", path)) {
-      setCurrentTab("Client");
+      setCurrentTab("Clients");
     } else if (matchPath("/add-client", path)) {
       setCurrentTab("Add Client");
     } else if (matchPath("/orders", path)) {
@@ -280,12 +280,16 @@ const Header = () => {
       setCurrentTab("Quotation Invoice");
     } else if (matchPath("/payment-report", path)) {
       setCurrentTab("Payment Report");
+    } else if (matchPath("/reports", path)) {
+      setCurrentTab("Reports");
     } else if (matchPath("/refurbihsment-report", path)) {
       setCurrentTab("Refurbishment Report");
     } else if (matchPath("/refurbishment-invoice/:id", path)) {
       setCurrentTab("Refurbihsment Invoice");
     } else if (matchPath("/inventory-product-list", path)) {
       setCurrentTab("Inventory Product");
+    } else if (matchPath("/damaged-products", path)) {
+      setCurrentTab("Damaged Products");
     } else {
       setCurrentTab("Dashboard");
     }
@@ -307,7 +311,7 @@ const Header = () => {
     "/dashboard",
     "/master",
     "/banner",
-    "/prdoduct-management",
+    "/product-management",
     "/client",
     "/orders",
     "/enquiry-list",
@@ -317,6 +321,8 @@ const Header = () => {
     "/payment-report",
     "/refurbihsment-report",
     "/inventory-product-list",
+    "/reports",
+    "/damaged-products",
   ];
 
   return (
@@ -332,9 +338,9 @@ const Header = () => {
         <p className="fs-5 fw-bold mb-0">{currentTab}</p>
       </div>
 
-      <div className="position-relative">
+      {/* <div className="position-relative">
         <FaUserCircle className="fs-3" style={{ cursor: "pointer" }} />
-      </div>
+      </div> */}
     </div>
   );
 };

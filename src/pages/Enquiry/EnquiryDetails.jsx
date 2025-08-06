@@ -196,9 +196,7 @@ const EnquiryDetails = () => {
   // console.log(`alprods : `, allProducts);
   console.log("enquiry: ", enquiry);
   console.log("filtered prods: ", filteredProducts);
-  const clientNo = enquiry?.clientDetails?.executives?.find(
-    (exec) => exec.name === enquiry.executivename
-  )?.phoneNumber || "N/A";
+  const clientNo = enquiry?.clientNo || "N/A";
 
   console.log(`clietnno:  `, clientNo);
   const dateFormat = (dateStr) => {
@@ -374,6 +372,7 @@ const EnquiryDetails = () => {
           quoteDate: enquiry.enquiryDate,
           endDate: enquiry.endDate,
           clientId: enquiry.clientId,
+          executiveId: enquiry.executiveId,
           clientName: enquiry.clientName,
           executivename: enquiry.executivename,
           workerAmt: 0, // or your value
@@ -385,7 +384,7 @@ const EnquiryDetails = () => {
           discount: Number(discount) || 0,
           status: "pending", // or use enquiry.status if you want
           termsandCondition: enquiry.termsandCondition || [],
-          clientNo: enquiry.clientDetails?.executives?.[0]?.phoneNumber || "",
+          clientNo: enquiry?.clientNo || "",
           address: enquiry.address,
           labourecharge: Number(manpower) || 0,
           transportcharge: Number(transport) || 0,
@@ -1158,7 +1157,7 @@ const EnquiryDetails = () => {
 
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Incharge Phone (opt.)</Form.Label>
+                  <Form.Label>Rent Angadi Point of Contact</Form.Label>
                   <Form.Control
                     type="number"
                     value={

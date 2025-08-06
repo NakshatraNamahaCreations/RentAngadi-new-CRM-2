@@ -16,6 +16,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { Spinner } from "react-bootstrap";
 
 const exportToExcel = (data, filename = 'InventoryData.xlsx') => {
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -34,6 +35,7 @@ const InventoryProduct = () => {
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Fetch products from the API
   useEffect(() => {
@@ -84,6 +86,7 @@ const InventoryProduct = () => {
     }
 
     try {
+      setLoading(true);
       const response = await axios.get(`${ApiURL}/inventory/filter/`, {
         params: {
           startDate: format(deliveryDate, 'dd-MM-yyyy'),
@@ -93,8 +96,10 @@ const InventoryProduct = () => {
       });
       console.log("inventory: ", response.data);
       setInventory(response.data.stock);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching inventory:", error);
+      setLoading(false);
     }
   };
 
@@ -117,7 +122,7 @@ const InventoryProduct = () => {
         <Row className="g-3 align-items-end">
           <Col md={4}>
             <Form.Group controlId="deliveryDate">
-            <h6 className="text-dark">Start Date</h6>
+              <h6 className="text-dark">Start Date</h6>
               {/* <Form.Control
                 type="date"
                 value={deliveryDate}
@@ -137,7 +142,7 @@ const InventoryProduct = () => {
           </Col>
           <Col md={4}>
             <Form.Group controlId="dismantleDate">
-            <h6 className="text-dark">End Date</h6>
+              <h6 className="text-dark">End Date</h6>
               <DatePicker
                 selected={dismantleDate} // Default to initial quoteDate
                 onChange={(date) => {
@@ -190,7 +195,7 @@ const InventoryProduct = () => {
               border: "none",
               color: "white",
               transition: "background 0.2s",
-            }}          
+            }}
             onClick={handleFetchInventory}
           >
             Fetch Filtered Inventory
@@ -203,7 +208,7 @@ const InventoryProduct = () => {
               border: "none",
               color: "white",
               transition: "background 0.2s",
-            }}          
+            }}
             // className="w-100"
             onClick={handleExport}
           >
@@ -212,7 +217,11 @@ const InventoryProduct = () => {
         </div>
 
         {/* Display the selected inventory */}
-        {inventory.length > 0 && (
+        {loading ? (
+          <div className="d-flex justify-content-center align-items-center">
+            <Spinner animation="border" role="status" />
+          </div>
+        ) : inventory.length > 0 && (
           <Row className="mt-4">
             <Col md={12}>
               <Table striped bordered hover responsive>

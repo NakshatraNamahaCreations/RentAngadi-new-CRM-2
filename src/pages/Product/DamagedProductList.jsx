@@ -108,7 +108,7 @@ const DamagedProductList = () => {
     <Container fluid>
       <Row className="mb-3">
         <Col>
-          <h4>Damaged/Lost Products</h4>
+          {/* <h4>Damaged/Lost Products</h4> */}
         </Col>
         <Col className="text-end">
           <Button variant="primary" 

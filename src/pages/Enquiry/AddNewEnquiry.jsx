@@ -124,7 +124,7 @@ const AddNewEnquiry = () => {
   };
 
   const fetchProducts = async () => {
-    try {
+    try { 
       const res = await axios.get(`${ApiURL}/product/quoteproducts`);
       if (res.status === 200) {
         setAllProducts(res.data.QuoteProduct);
