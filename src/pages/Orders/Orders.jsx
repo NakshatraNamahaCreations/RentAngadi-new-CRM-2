@@ -127,7 +127,7 @@ const Orders = () => {
   );
 
   const handleCalendarEventClick = (event) => {
-    navigate(`/orders-by-date/${event.date}`);
+    navigate(`/orders-by-date/${event.date}`, { state: { searchQuery: searchQuery } });
   };
 
   const eventStyleGetter = (event) => ({

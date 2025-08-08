@@ -26,7 +26,10 @@
 //         // Filter the orders based on the selected date (compare only date part)
 //         const filteredOrders = allOrders.filter(
 //           (order) =>
-//             moment(order.createdAt).format("YYYY-MM-DD") === selectedDate
+//             moment(order.createdAt).format("YYYY-MM-DD") === selectedDate &&
+//             (order.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//               order.executivename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//               order.Address?.toLowerCase().includes(searchQuery.toLowerCase()))
 //         );
 
 //         // Map data to match the table's required fields
@@ -134,10 +137,14 @@ import moment from "moment";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { ApiURL } from "../../api";
+import { useLocation } from "react-router-dom";
 
 const DISPLAY_DATE_FORMAT = "DD-MM-YYYY";
 
 const OrderListBydate = () => {
+  const { state } = useLocation();
+  console.log(`station: `, state);
+  const searchQuery = state?.searchQuery || '';
   const navigate = useNavigate();
   const { date } = useParams(); // Get the selected date from the URL
   const [orders, setOrders] = useState([]);
@@ -152,13 +159,16 @@ const OrderListBydate = () => {
       if (res.status === 200) {
         const allOrders = res.data.orderData;
 
-        // Filter orders by slot.quoteDate matching the selected date
+        // Filter orders by slot.quoteDate matching the selected date and search query
         const filteredOrders = allOrders.filter((order) =>
           order.slots?.some(
             (slot) =>
               moment(slot.quoteDate, "DD-MM-YYYY").format("YYYY-MM-DD") ===
               selectedDate
-          )
+          ) &&
+          (order.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.executivename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.Address?.toLowerCase().includes(searchQuery.toLowerCase()))
         );
 
         const formattedOrders = filteredOrders.map((order) => {

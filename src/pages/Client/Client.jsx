@@ -55,7 +55,8 @@ const Client = () => {
 
   // Pagination logic
   const filteredClients = clients.filter((client) =>
-    client.companyName.toLowerCase().includes(searchQuery.toLowerCase())
+    client.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.contactPersonNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const totalItems = filteredClients.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);

@@ -1485,7 +1485,9 @@ const QuotationDetails = () => {
             {!editDiscount ? (
               <>
                 <div className="d-flex align-items-center">
-                  <Button variant="link" size="sm" onClick={() => setEditDiscount(true)}>
+                  <Button variant="link" size="sm"
+                    disabled={quotation.status === "cancelled" || quotation.status === "send"}
+                    onClick={() => setEditDiscount(true)}>
                     <FaEdit />
                   </Button>
                   <span>-₹{(quotation.discount / 100 * quotation.allProductsTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -1525,7 +1527,7 @@ const QuotationDetails = () => {
               </>
             )}
           </div>}
-          {(quotation?.discount != 0 || editDiscount) && <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>          
+          {(quotation?.discount != 0 || editDiscount) && <div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
             <span>Total amount after discount:</span>
             <span>₹{(quotation.afterDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>}
@@ -1535,7 +1537,9 @@ const QuotationDetails = () => {
             {!editTransport ? (
               <>
                 <div className="d-flex align-items-center">
-                  <Button variant="link" size="sm" onClick={() => setEditTransport(true)}>
+                  <Button variant="link" size="sm"
+                    disabled={quotation.status === "cancelled" || quotation.status === "send"}
+                    onClick={() => setEditTransport(true)}>
                     <FaEdit />
                   </Button>
                   <span className="">
@@ -1583,7 +1587,9 @@ const QuotationDetails = () => {
             {!editManPower ? (
               <>
                 <div className="d-flex align-items-center">
-                  <Button variant="link" size="sm" onClick={() => setEditManPower(true)}>
+                  <Button variant="link" size="sm"
+                    disabled={quotation.status === "cancelled" || quotation.status === "send"}
+                    onClick={() => setEditManPower(true)}>
                     <FaEdit />
                   </Button>
                   <span className="">
@@ -1630,7 +1636,9 @@ const QuotationDetails = () => {
             {/* {!editMode ? (
               <>
                 <div className="d-flex align-items-center">
-                <Button variant="link" size="sm" onClick={() => setEditMode(true)}>
+                <Button variant="link" size="sm"
+                  disabled={quotation.status === "cancelled" || quotation.status === "send"}
+                  onClick={() => setEditMode(true)}>
                     <FaEdit />
                   </Button>
                   <span className="me-2">
@@ -1672,7 +1680,9 @@ const QuotationDetails = () => {
             {!editMode ? (
               <>
                 <div className="d-flex align-items-center">
-                  <Button variant="link" size="sm" onClick={() => setEditMode(true)}>
+                  <Button variant="link" size="sm"
+                    disabled={quotation.status === "cancelled" || quotation.status === "send"}
+                    onClick={() => setEditMode(true)}>
                     <FaEdit />
                   </Button>
                   <span className="">
