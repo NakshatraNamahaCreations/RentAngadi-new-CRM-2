@@ -32,7 +32,7 @@ const AddClient = () => {
   // const [errorMessage, setErrorMessage] = useState("");
   // const [phoneErrors, setPhoneErrors] = useState([]);
   // const [clientPhoneErrors, setClientPhoneErrors] = useState("");
-  
+
   const navigate = useNavigate();
   const [client, setClient] = useState({
     companyName: "",
@@ -43,7 +43,7 @@ const AddClient = () => {
     password: "",
   });
 
-  const [executives, setExecutives] = useState([{ name: "", phone: "" }]);  
+  const [executives, setExecutives] = useState([{ name: "", phone: "" }]);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [phoneErrors, setPhoneErrors] = useState([]);
@@ -260,6 +260,7 @@ const AddClient = () => {
                 }}
                 required
                 className="rounded-3 shadow-sm"
+                pattern="[0-9]*"
               />
               {clientPhoneErrors && (
                 <Form.Text className="text-danger">

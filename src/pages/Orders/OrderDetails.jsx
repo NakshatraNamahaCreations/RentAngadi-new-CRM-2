@@ -168,7 +168,7 @@ const OrderDetails = () => {
           return slot;
         });
 
-        console.log("order slots: ", order.slots[0].products[0]);
+        console.log("order.slots[0].products: ", order.slots[0].products);
 
         // You can also update the top-level `products` if you want
         if (order?.products?.length) {
@@ -932,6 +932,25 @@ const OrderDetails = () => {
   };
 
   const handleAddPayment = async () => {
+
+    if (!paymentData.amount || paymentData.amount === '' || paymentData.amount === '0' || paymentData.amount === 0) {
+      console.log(`typeof payment.amount `, typeof paymentData.amount);
+      toast.error("Amount cannot be empty or zero")
+      return
+    } else if (!paymentData.mode) {
+      toast.error("Please select a payment mode")
+      return
+    } else if (paymentData.amount > amountPending) {
+      console.log(`amountPending: `, amountPending);
+      toast.error("Please pay no more than Amount Pending")
+      return
+    }
+
+    // else {
+    //   toast.success("paid")
+    // }
+    // return
+
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
@@ -1151,7 +1170,7 @@ const OrderDetails = () => {
                   >
                     Add Product
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="outline-success"
                     size="sm"
                     style={{ fontSize: 12, padding: "2px 14px" }}
@@ -1159,7 +1178,7 @@ const OrderDetails = () => {
                     disabled={order && order.orderStatus === "cancelled"}
                   >
                     Add Refurbishment
-                  </Button>
+                  </Button> */}
                 </div>
               )}
             </div>

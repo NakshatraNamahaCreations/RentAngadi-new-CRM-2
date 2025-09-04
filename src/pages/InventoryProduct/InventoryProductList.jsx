@@ -13,10 +13,18 @@ import Select from "react-select"; // Import react-select
 import { ApiURL, ImageApiURL } from "../../api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Spinner } from "react-bootstrap";
+
+const parseDate = (str) => {
+  // console.log("parseDate str error: ", str)
+  if (!str) return null; // If date is undefined or null, return null.
+  const [day, month, year] = str.split("-"); // Assuming date format is DD-MM-YYYY
+  return new Date(`${year}-${month}-${day}`); // Convert to YYYY-MM-DD format for JavaScript Date
+};
+
 
 const exportToExcel = (data, filename = 'InventoryData.xlsx') => {
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -85,6 +93,16 @@ const InventoryProduct = () => {
       return;
     }
 
+    console.log(`deliveryDate: `, deliveryDate);
+    console.log(`dismantleDate: `, dismantleDate);
+
+    if (deliveryDate > dismantleDate) {
+      setDeliveryDate("");
+      setDismantleDate("")
+      alert("Dismantle Date should be greater than Delivery Date. Please select valid dates.");
+      window.location.reload();
+    }
+
     try {
       setLoading(true);
       const response = await axios.get(`${ApiURL}/inventory/filter/`, {
@@ -148,6 +166,7 @@ const InventoryProduct = () => {
                 onChange={(date) => {
                   setDismantleDate(date);
                 }}
+                minDate={deliveryDate} // Ensure date is within range                
                 dateFormat="dd/MM/yyyy"
                 className="form-control"
                 placeholderText="DD/MM/YYYY"

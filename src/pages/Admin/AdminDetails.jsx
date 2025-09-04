@@ -8,22 +8,23 @@ import { toast } from "react-hot-toast";
 import { ApiURL } from "../../api";
 
 const roleList = [
-	"dashboard",
-	"master",
-	"banner",
-	"productManagement",
-	"clients",
-	"enquiryList",
-	"enquiryCalendar",
-	"quotation",
-	"orders",
-	"termsAndConditions",
-	"paymentReport",
-	"refurbishmentReport",
-	"inventoryProductList",
-	"adminRights",
-	"reports",
-	"damagedAndLost"
+	{ key: "dashboard", label: "Dashboard Access" },
+	{ key: "master", label: "Master Module" },
+	{ key: "banner", label: "Banner Management" },
+	{ key: "productManagement", label: "Product Management" },
+	{ key: "clients", label: "Client Management" },
+	{ key: "executiveManagement", label: "Executive Management" },
+	{ key: "enquiryList", label: "Enquiry List" },
+	{ key: "enquiryCalendar", label: "Enquiry Calendar" },
+	{ key: "quotation", label: "Quotation Management" },
+	{ key: "orders", label: "Order Management" },
+	{ key: "termsAndConditions", label: "Terms & Conditions" },
+	{ key: "paymentReport", label: "Payment Reports" },
+	{ key: "refurbishmentReport", label: "Refurbishment Reports" },
+	{ key: "inventoryProductList", label: "Inventory Products" },
+	{ key: "adminRights", label: "Admin Rights Management" },
+	{ key: "reports", label: "General Reports" },
+	{ key: "damagedAndLost", label: "Damaged & Lost Products" }
 ];
 
 const AdminDetails = () => {
@@ -46,7 +47,7 @@ const AdminDetails = () => {
 		}
 	};
 
-	// ✅ Fetch cities from API
+	// Fetch cities from API
 	const fetchCities = async () => {
 		try {
 			const response = await fetch(`${ApiURL}/cities`);
@@ -65,9 +66,9 @@ const AdminDetails = () => {
 			const res = await axios.get(`${ApiURL}/admins/permissions/${id}`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
-					'Cache-Control': 'no-cache',       // Prevent cached responses
-					'Pragma': 'no-cache',              // Older HTTP 1.0 caches
-					'Expires': '0'                     // Force immediate expiration
+					'Cache-Control': 'no-cache',
+					'Pragma': 'no-cache',
+					'Expires': '0'
 				},
 			});
 
@@ -82,10 +83,12 @@ const AdminDetails = () => {
 
 	useEffect(() => {
 		fetchUser();
+		fetchCategories();
+		fetchCities();
 	}, []);
 
-	const handleRoleChange = (role) => {
-		setRoles((prev) => ({ ...prev, [role]: !prev[role] }));
+	const handleRoleChange = (roleKey) => {
+		setRoles((prev) => ({ ...prev, [roleKey]: !prev[roleKey] }));
 	};
 
 	const handleSubmit = async () => {
@@ -105,7 +108,7 @@ const AdminDetails = () => {
 			});
 
 			window.location.reload();
-			toast.success("✅ User rights updated successfully");
+			toast.success(" User rights updated successfully");
 		} catch (error) {
 			console.error("Update failed:", error);
 			alert("Something went wrong!");
@@ -118,37 +121,37 @@ const AdminDetails = () => {
 
 			{/* Category Multi Select */}
 			{/* <div className="mb-3">
-				<label className="form-label">Select Categories</label>
-				<Select
-					isMulti
-					placeholder="Select Categories"
-					options={categories.map((cat) => ({
-						label: cat.category_name,
-						value: cat.category_name,
-					}))}
-					value={category.map((c) => ({ label: c.name, value: c.name }))}
-					onChange={(selected) =>
-						setCategory(selected.map((item) => ({ name: item.value })))
-					}
-				/>
-			</div> */}
+        <label className="form-label">Select Categories</label>
+        <Select
+          isMulti
+          placeholder="Select Categories"
+          options={categories.map((cat) => ({
+            label: cat.category_name,
+            value: cat.category_name,
+          }))}
+          value={category.map((c) => ({ label: c.name, value: c.name }))}
+          onChange={(selected) =>
+            setCategory(selected.map((item) => ({ name: item.value })))
+          }
+        />
+      </div> */}
 
 			{/* City Multi Select */}
 			{/* <div className="mb-4">
-				<label className="form-label">Select Cities</label>
-				<Select
-					isMulti
-					placeholder="Select Cities"
-					options={cities.map((c) => ({
-						label: c.city_name,
-						value: c.city_name,
-					}))}
-					value={city.map((c) => ({ label: c.name, value: c.name }))}
-					onChange={(selected) =>
-						setCity(selected.map((item) => ({ name: item.value })))
-					}
-				/>
-			</div> */}
+        <label className="form-label">Select Cities</label>
+        <Select
+          isMulti
+          placeholder="Select Cities"
+          options={cities.map((c) => ({
+            label: c.city_name,
+            value: c.city_name,
+          }))}
+          value={city.map((c) => ({ label: c.name, value: c.name }))}
+          onChange={(selected) =>
+            setCity(selected.map((item) => ({ name: item.value })))
+          }
+        />
+      </div> */}
 
 			{/* Role Checkboxes */}
 			<div className="card p-4 mb-4">
@@ -161,11 +164,11 @@ const AdminDetails = () => {
 									type="checkbox"
 									className="form-check-input"
 									id={`role-${role}`}
-									checked={!!roles[role]}
-									onChange={() => handleRoleChange(role)}
+									checked={!!roles[role.key]}
+									onChange={() => handleRoleChange(role.key)}
 								/>
 								<label className="form-check-label" htmlFor={`role-${role}`}>
-									{role}
+									{role.label}
 								</label>
 							</div>
 						</div>
@@ -173,9 +176,9 @@ const AdminDetails = () => {
 				</div>
 			</div>
 
-			<button className="btn btn-primary" onClick={handleSubmit}>
+			<Button className="btn btn-primary" onClick={handleSubmit}>
 				Save Rights
-			</button>
+			</Button>
 		</div>
 	);
 };

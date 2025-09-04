@@ -299,8 +299,8 @@ const ClientReports = () => {
 							<th onClick={() => handleSort('allProductsTotal')} style={{ width: '15%' }}>
 								Products Total {getSortIcon('allProductsTotal')}
 							</th>
-							<th onClick={() => handleSort('allProductsTotal')} style={{ width: '15%' }}>
-								Discount Total {getSortIcon('allProductsTotal')}
+							<th onClick={() => handleSort('totalDiscount')} style={{ width: '15%' }}>
+								Discount Total {getSortIcon('totalDiscount')}
 							</th>
 							<th onClick={() => handleSort('totalRoundOff')} style={{ width: '15%' }}>
 								RoundOff Total {getSortIcon('totalRoundOff')}

@@ -25,6 +25,7 @@ const Quotation = () => {
     setLoading(true);
     try {
       const res = await axios.get(`${ApiURL}/quotations/getallquotations`);
+      console.log("Quotations", res.data.quoteData);
       if (res.status === 200) {
         setQuotations(res.data.quoteData || []);
         setFilteredQuotations(res.data.quoteData || []);
@@ -47,7 +48,8 @@ const Quotation = () => {
           .includes(searchQuery.toLowerCase()) ||
         String(q.GrandTotal || "").includes(searchQuery) ||
         String(q._id || "").includes(searchQuery) ||
-        (q.status || "").toLowerCase().includes(searchQuery.toLowerCase())
+        (q.status || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (q.quoteId || "").toLowerCase().includes(searchQuery.toLowerCase()) 
     );
     setFilteredQuotations(filtered);
     setCurrentPage(1);

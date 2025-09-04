@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
 import ProductReports from './ProductReports';
-import ClientReports from './ClientReports ';
+import ClientReports from './ClientReports';
 
 const Reports = () => {
   const [key, setKey] = useState('product');

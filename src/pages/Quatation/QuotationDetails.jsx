@@ -195,6 +195,24 @@ const QuotationDetails = () => {
   };
 
   const handleAddPayment = async () => {
+
+    if (!paymentData.amount || paymentData.amount === '' || paymentData.amount === '0' || paymentData.amount === 0) {
+      console.log(`typeof payment.amount `, typeof paymentData.amount);
+      toast.error("Amount cannot be empty or zero")
+      return
+    } else if (!paymentData.mode) {
+      toast.error("Please select a payment mode")
+      return
+    } else if (paymentData.amount > quotation?.finalTotal) {
+      toast.error(`Max allowed to be paid is: ${quotation?.finalTotal}`)
+      return
+    } else {
+      toast.success("paid")
+    }
+
+    // toast.success(`executed ${quotation.finalTotal}`)
+    // return
+
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
@@ -1458,6 +1476,7 @@ const QuotationDetails = () => {
               quotation.discount = 1
               console.log(`Add discount: `, quotation.discount)
             }}
+            disabled={quotation.status === "cancelled" || quotation.status === "send"}
           >
             Add discount
           </Button>}
@@ -1915,6 +1934,31 @@ const QuotationDetails = () => {
                   onChange={handleInputChange}
                   placeholder="0"
                   style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                />
+              </div>
+            </Form.Group>
+            {/* Amuont Max */}
+            <Form.Group className="mb-3">
+              <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                Amount Pending
+              </Form.Label>
+              <div className="d-flex align-items-center">
+                <span
+                  style={{
+                    marginRight: "10px",
+                    fontSize: "1.2rem",
+                    color: "#34495e",
+                  }}
+                >
+                  ₹
+                </span>
+                <Form.Control
+                  type="number"
+                  name="amount"
+                  value={quotation?.finalTotal || quotation?.GrandTotal}
+                  placeholder="0"
+                  style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                  disabled={true}
                 />
               </div>
             </Form.Group>

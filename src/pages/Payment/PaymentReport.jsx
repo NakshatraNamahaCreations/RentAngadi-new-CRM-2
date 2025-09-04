@@ -49,7 +49,8 @@ const PaymentReport = () => {
 
   // Filter payments by search and date
   const filteredPayments = payments.filter((payment) => {
-    const query = searchQuery.toLowerCase();
+    // const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
     const isMatch =
       (payment.quotationId?.quoteId || payment.quotationId || "")
         .toString()
@@ -60,7 +61,9 @@ const PaymentReport = () => {
       (payment.paymentMode || "").toLowerCase().includes(query) ||
       (payment.paymentStatus || payment.status || "")
         .toLowerCase()
-        .includes(query);
+        .includes(query) ||
+      (payment?.companyName || "").toLowerCase().includes(query) ||
+      (payment.paymentRemarks).toLowerCase().includes(query);
 
     // Get the payment date from either createdAt or paymentDate
     const paymentDate = payment.createdAt || payment.paymentDate;
@@ -159,6 +162,57 @@ const PaymentReport = () => {
     setShowSlipModal(true);
   };
 
+  const handleDownloadExcel = () => {
+    if (!filteredPayments || filteredPayments.length === 0) {
+      alert("No data to download!");
+      return;
+    }
+
+    // Map data into custom format
+    const formattedData = filteredPayments.map((item) => {
+      const balance = item.totalAmount - (item.advancedAmount || 0);
+
+      return {
+        Date: new Date(item.createdAt).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        Company: item.companyName || "-",
+        "Quotation ID": item.quotationId || "-",
+        "Total Amount": item.totalAmount || 0,
+        "Advanced Paid": item.advancedAmount || 0,
+        Balance: balance,
+        "Payment Mode": item.paymentMode || "-",
+        Remarks: item.paymentRemarks || "-",
+        Comment: item.comment || "-",
+        Status: item.status || "-",
+      };
+    });
+
+    // 1. Convert JSON to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    // 2. Create a new workbook and append the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+
+    // 3. Write workbook to binary string
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    // 4. Convert to Blob and trigger download
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(data, "Payments.xlsx");
+  };
+
   // Date picker effect
   // Date filter effect
   useEffect(() => {
@@ -179,6 +233,15 @@ const PaymentReport = () => {
           style={{ width: "300px", fontSize: "12px", marginBottom: "10px" }}
         />
         <div className="d-flex gap-2">
+          <Button
+            variant="outline-primary"
+            style={{ marginRight: 10 }}
+            size="sm"
+            onClick={() => handleDownloadExcel()}
+          >
+            Download Excel
+          </Button>
+
           <DatePicker
             selected={fromDate}
             onChange={(date) => setFromDate(date)}
@@ -197,7 +260,7 @@ const PaymentReport = () => {
             // selectsEnd
             // startDate={fromDate}
             // endDate={toDate}
-            // minDate={fromDate || twoMonthsAgo}
+            minDate={fromDate}
             // maxDate={today}
             placeholderText="To Date"
             className="form-control form-control-sm"
@@ -299,31 +362,31 @@ const PaymentReport = () => {
               )}
             </tbody>
             <Modal show={showSlipModal} onHide={() => setShowSlipModal(false)} centered>
-  <Modal.Header closeButton>
-    <Modal.Title>Payment Slip</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    {selectedPayment && (
-      <div style={{ fontSize: "14px" }}>
-        <p><strong>Date:</strong> {moment(selectedPayment.createdAt).format("DD/MM/YYYY hh:mm A")}</p>
-        <p><strong>Company:</strong> {selectedPayment.companyName}</p>
-        <p><strong>Quotation ID:</strong> {selectedPayment.quotationId}</p>
-        <p><strong>Total Amount:</strong> ₹{selectedPayment.totalAmount}</p>
-        <p><strong>Advanced Paid:</strong> ₹{selectedPayment.advancedAmount}</p>
-        <p><strong>Balance:</strong> ₹{selectedPayment.totalAmount - selectedPayment.advancedAmount}</p>
-        <p><strong>Payment Mode:</strong> {selectedPayment.paymentMode}</p>
-        <p><strong>Remarks:</strong> {selectedPayment.paymentRemarks}</p>
-        <p><strong>Comment:</strong> {selectedPayment.comment || "N/A"}</p>
-        <p><strong>Status:</strong> {selectedPayment.status || "N/A"}</p>
-      </div>
-    )}
-  </Modal.Body>
-  <Modal.Footer>
-    <Button variant="secondary" onClick={() => setShowSlipModal(false)}>
-      Close
-    </Button>
-  </Modal.Footer>
-</Modal>
+              <Modal.Header closeButton>
+                <Modal.Title>Payment Slip</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                {selectedPayment && (
+                  <div style={{ fontSize: "14px" }}>
+                    <p><strong>Date:</strong> {moment(selectedPayment.createdAt).format("DD/MM/YYYY hh:mm A")}</p>
+                    <p><strong>Company:</strong> {selectedPayment.companyName}</p>
+                    <p><strong>Quotation ID:</strong> {selectedPayment.quotationId}</p>
+                    <p><strong>Total Amount:</strong> ₹{selectedPayment.totalAmount}</p>
+                    <p><strong>Advanced Paid:</strong> ₹{selectedPayment.advancedAmount}</p>
+                    <p><strong>Balance:</strong> ₹{selectedPayment.totalAmount - selectedPayment.advancedAmount}</p>
+                    <p><strong>Payment Mode:</strong> {selectedPayment.paymentMode}</p>
+                    <p><strong>Remarks:</strong> {selectedPayment.paymentRemarks}</p>
+                    <p><strong>Comment:</strong> {selectedPayment.comment || "N/A"}</p>
+                    <p><strong>Status:</strong> {selectedPayment.status || "N/A"}</p>
+                  </div>
+                )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={() => setShowSlipModal(false)}>
+                  Close
+                </Button>
+              </Modal.Footer>
+            </Modal>
 
           </Table>
         </div>

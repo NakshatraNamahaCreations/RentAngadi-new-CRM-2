@@ -24,7 +24,7 @@ const EnquiryList = () => {
       setLoading(true);
       try {
         const res = await axios.get(`${ApiURL}/Enquiry/getallEnquiry`);
-        // console.log(`res.data: `, res.data);
+        console.log(`getallEnquiry res.data: `, res.data);
         if (res.status === 200) {
           setEnquiries(res.data);
         }
@@ -40,8 +40,9 @@ const EnquiryList = () => {
   const filtered = enquiries.filter(
     (e) =>
       (e.enquiryId && String(e.enquiryId).toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (e.companyName && e.companyName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (e.executiveName && e.executiveName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.clientName && e.clientName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.GrandTotal && e.GrandTotal.toString().toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.executivename && e.executivename.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (e.enquiryDate && e.enquiryDate.includes(searchQuery))
   );
 
@@ -106,7 +107,7 @@ const EnquiryList = () => {
             Enquiry List
           </h5>
 
-          <Button
+          {/* <Button
             size="sm"
             style={{
               backgroundColor: "#BD5525",
@@ -117,7 +118,7 @@ const EnquiryList = () => {
             className="add-btn"
           >
             Create Enquiry
-          </Button>
+          </Button> */}
         </Card.Body>
       </Card>
 

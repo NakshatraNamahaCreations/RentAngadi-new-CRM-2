@@ -32,7 +32,7 @@ import ProductDetails from "./pages/Product/ProductDetails.jsx";
 import QuotationDetails from "./pages/Quatation/QuotationDetails.jsx";
 import ProductReports from "./pages/reports/ProductReports";
 import QuotationInvoice from "./pages/Quatation/QuotationInvoice.jsx";
-import ClientReports from "./pages/reports/ClientReports ";
+import ClientReports from "./pages/reports/ClientReports.jsx";
 import Reports from "./pages/reports/Reports";
 import DamagedProductList from "./pages/Product/DamagedProductList.jsx";
 // import AdminRights from "./pages/Admin/AdminRights.jsx";
