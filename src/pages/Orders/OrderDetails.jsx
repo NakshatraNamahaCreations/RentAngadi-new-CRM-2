@@ -579,8 +579,8 @@ const OrderDetails = () => {
           quantity: editQty, // The new quantity
           quoteDate: order.slots[0].quoteDate, // Start date of the slot
           endDate: order.slots[0].endDate, // End date of the slot
-          productQuoteDate: productQuoteDate || order.slots[0].quoteDate,
-          productEndDate: productEndDate || order.slots[0].endDate,
+          productQuoteDate: productQuoteDate || order.slots[0].products[idx]?.productQuoteDate ||order.slots[0].quoteDate,
+          productEndDate: productEndDate || order.slots[0].products[idx]?.productEndDate || order.slots[0].endDate,
           productSlot, // Slot information
         }
       );
@@ -787,7 +787,7 @@ const OrderDetails = () => {
         if (isNaN(days) || days < 1) days = 1;
       }
 
-      const price = prod.ProductPrice || 0;
+      const price = prod.productPrice || 0;
       prod.days = days;
       prod.productTotal = price * days * prod.quantity;
       console.log(`${prod.productName} productTotal: ${prod.productTotal}`)
@@ -930,6 +930,30 @@ const OrderDetails = () => {
       setPdfMode(false); // deactivate after export
     }, 300); // wait to let UI re-render without unnecessary columns
   };
+
+  const handlePaymentInputChange = async (e) => {
+    // const numericValue = parseFloat(value) || 0;
+    // const maxAmount = parseFloat(quotation?.finalTotal) || 0;
+    // const finalValue = Math.min(numericValue, maxAmount);
+
+    // setPaymentData((prev) => ({ ...prev, amount: e.target.value }))
+
+    console.log(`paymentData: `, paymentData);
+    const { name, value } = e.target;
+
+    if (name === 'amount') {
+      console.log(`changing amount: `, paymentData.amount);
+      const numericValue = parseFloat(value) || 0;
+      const maxAmount = parseFloat(amountPending) || 0;
+      const finalValue = Math.min(numericValue, maxAmount);
+      console.log(`grandTotal: `, grandTotal);
+      console.log(`numericValue: `, numericValue);
+      console.log(`finalValue: `, finalValue);
+      setPaymentData((prev) => ({ ...prev, amount: finalValue.toString() }));
+    } else {
+      setPaymentData((prev) => ({ ...prev, [name]: value }));
+    }
+  }
 
   const handleAddPayment = async () => {
 
@@ -1090,10 +1114,10 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
-                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Grand Total: </span>
                   <span style={valueStyle}>₹ {grandTotal}</span>
-                </div>
+                </div> */}
                 {/* )} */}
                 {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Man power: </span>
@@ -1103,7 +1127,7 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Transport: </span>
                   <span style={valueStyle}>₹ {order.transportcharge}</span>
                 </div> */}
-                <div
+                {/* <div
                   className="mb-1"
                   style={{ display: "flex", gap: "10px", alignItems: "center", lineHeight: "1.2" }}
                 >
@@ -1145,15 +1169,15 @@ const OrderDetails = () => {
                       </Button>
                     </div>
                   )}
-                </div>
-                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                </div> */}
+                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>paid so far:</span>
                   <span style={valueStyle}>₹ {amountPaid}</span>
                 </div>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>remaining pay:</span>
                   <span style={valueStyle}>₹ {amountPending}</span>
-                </div>
+                </div> */}
               </Col>
             </Row>
             <hr className="my-3" />
@@ -1199,6 +1223,7 @@ const OrderDetails = () => {
                     {!pdfMode && <th>Remaining Stock</th>}
                     <th>Selected Qty</th>
                     <th>Days</th>
+                    {/* you have t comment these 2 */}
                     <th>Price/Qty</th>
                     <th>Total</th>
                     {!pdfMode && <th>Action</th>}
@@ -1412,7 +1437,8 @@ const OrderDetails = () => {
                           )}
                         </td>
                         <td>{prod.days}</td>
-                        <td>₹{(prod.ProductPrice)}</td>
+                    {/* you have t comment these 2 */}
+                        <td>₹{(prod.productPrice)}</td>
                         <td>₹{prod.productTotal}</td>
                         {/* {(idx === 0) && console.log(`prod.total * days: ${prod.total * days} prod.productName: ${prod.productName}prod.total: ${prod.total}`)} */}
                         {!pdfMode && (
@@ -1941,7 +1967,7 @@ const OrderDetails = () => {
                     name="amount"
                     value={paymentData.amount}
                     max={order?.GrandTotal}
-                    onChange={(e) => setPaymentData((prev) => ({ ...prev, amount: e.target.value }))}
+                    onChange={handlePaymentInputChange}
                     placeholder="0"
                     style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
                   />

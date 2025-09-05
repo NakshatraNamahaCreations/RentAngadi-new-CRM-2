@@ -38,6 +38,11 @@ function setStoredProducts(products) {
   localStorage.setItem(ENQUIRY_PRODUCTS_KEY, JSON.stringify(products));
 }
 
+function getRandomItems(array, n) {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, n);
+}
+
 const AddNewEnquiry = () => {
   const navigate = useNavigate();
   const [clientData, setClientData] = useState([]);
@@ -70,6 +75,9 @@ const AddNewEnquiry = () => {
   const [dismantleSlots, setDismantleSlots] = useState([]);
   const [availableDeliverySlots, setAvailableDeliverySlots] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [userRole, setUserRole] = useState("");
+  const [loading, setLoading] = useState(false);
+  console.log(`clientData`, clientData);
 
   // Selected products (persisted)
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -113,10 +121,18 @@ const AddNewEnquiry = () => {
   }, [company, clientData, executive]);
 
   const fetchClients = async () => {
+    const token = sessionStorage.getItem("token");
+    const user = sessionStorage.getItem("user");
     try {
-      const res = await axios.get(`${ApiURL}/client/getallClientsNames`);
+      const res = await axios.get(`${ApiURL}/client/getallClients`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(`client/getallClients res.data: `, res.data);
       if (res.status === 200) {
-        setClientData(res.data.ClientNames);
+        setClientData(res.data.Client);
+        setUserRole(res.data.userRole);
       }
     } catch (error) {
       console.error("Error fetching clients:", error);
@@ -124,7 +140,7 @@ const AddNewEnquiry = () => {
   };
 
   const fetchProducts = async () => {
-    try { 
+    try {
       const res = await axios.get(`${ApiURL}/product/quoteproducts`);
       if (res.status === 200) {
         setAllProducts(res.data.QuoteProduct);
@@ -133,6 +149,62 @@ const AddNewEnquiry = () => {
       console.error("Error fetching products:", error);
     }
   };
+
+  useEffect(() => {
+    if (clientData.length > 0 && allProducts.length > 0) {
+      // 1. Choose first company
+      const company = clientData[0];
+      setCompany(company.name);
+
+      // 2. Choose random executive from this company
+      if (company.executives?.length > 0) {
+        const randomExec =
+          company.executives[
+          Math.floor(Math.random() * company.executives.length)
+          ];
+        setExecutive(randomExec.name);
+      }
+
+      // 3. Delivery & dismantle dates
+      const today = new Date();
+      const delivery = today;
+      const dismantle = new Date(today);
+      console.log(`random: `, Math.random() * 10);
+      dismantle.setDate(today.getDate() + Math.random() * 10); // 5 days later
+
+      setDeliveryDate(delivery);
+      setDismantleDate(dismantle);
+
+      // 4. Random slot
+      // const slot =
+      //   deliveryDismantleSlots[
+      //   Math.floor(Math.random() * deliveryDismantleSlots.length)
+      //   ];
+      const slot =
+        deliveryDismantleSlots[Math.floor(Math.random() * (deliveryDismantleSlots.length - 1)) + 1];
+
+      setSelectedSlot(slot);
+
+      // 5. Venue address: random + timestamp
+      // setVenue(`Auto venue ${new Date().toLocaleString()}`);
+      // setVenue(`Auto venue ${new Date().toUTCString()}`);
+      setVenue(`Auto venue`);
+
+      // 6. Sub Category: Sofa
+      setSubCategory("Sofa");
+
+      // 7. Choose random 3 sofa products
+      const sofaProducts = allProducts.filter(
+        (p) => p.ProductSubcategory?.toLowerCase() === "sofa"
+      );
+      const picked = getRandomItems(sofaProducts, 3).map((p) => ({
+        ...p,
+        qty: 1,
+        total: p.ProductPrice,
+      }));
+      setSelectedProducts(picked);
+    }
+  }, [clientData, allProducts]);
 
   const handleSubcategorySelection = (e) => {
     const subcategory = e.target.value;
@@ -188,6 +260,15 @@ const AddNewEnquiry = () => {
   const handleQtyChange = (id, qty) => {
     // Directly update the quantity without replacing or restricting characters
     let val = qty;
+    const product = selectedProducts.find(p => p.id === id || p._id === id);
+
+    // Ensure quantity doesn't exceed product stock
+    if (product && product.ProductStock) {
+      val = Math.min(parseFloat(val), product.ProductStock);
+      if (parseFloat(val) > product.ProductStock) {
+        toast.warning(`Quantity cannot exceed available stock (${product.ProductStock})`);
+      }
+    }
 
     // Update the selected products with the new quantity and total
     setSelectedProducts((prev) =>
@@ -208,13 +289,23 @@ const AddNewEnquiry = () => {
     setProductSearch("");
   };
 
+  /*
+  * first we find company name then chekc fr exec if exists
+  */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const chosenClient = clientData.find((c) => c.name === company);
+
+    if (!chosenClient) {
+      alert("Company not found. Choose company");
+      return;
+    }
 
     // Validation (add more as needed)
     if (
       !company ||
-      !executive ||
+      // (chosenClient.executives.length > 0 && !executive) ||
       !deliveryDate ||
       !dismantleDate ||
       !selectedSlot ||
@@ -225,6 +316,25 @@ const AddNewEnquiry = () => {
       return;
     }
 
+    if (deliveryDate > dismantleDate) {
+      alert("Delivery date cannot be after Dismantle date");
+      return;
+    }
+
+
+    const clientId = chosenClient._id
+
+    const executives = chosenClient.executives;
+
+    let chosenExecutive = ''
+    if (executives.length === 0) {
+      chosenExecutive = ''
+    } else {
+      chosenExecutive = executives.find((e) => e.name === executive)
+    }
+
+    const executivePhoneNumber = chosenExecutive?.phoneNumber;
+
     // Prepare products array for API
     const Products = selectedProducts.map((p) => ({
       productId: p._id || p.id,
@@ -234,8 +344,19 @@ const AddNewEnquiry = () => {
       total: (parseInt(p.qty, 10) || 1) * (p.ProductPrice || p.price),
     }));
 
-    const clientId = clientData.find((c) => c.clientName === company)?._id;
+    // const clientId = clientData.find((c) => c.name === company)?._id;
+    // console.log(`clientId: `, clientId);
+    // const executiveId = clientData.find((c) => c.name === company)?.executives?.find((e) => e.name === executive)?._id;
+    // console.log(`executiveId: `, executiveId);
+    // const executivePhoneNumber = clientData.find((c) => c.name === company)?.executives?.find((e) => e.name === executive)?.phoneNumber;
+    // console.log(`executivePhoneNumber: `, executivePhoneNumber);
 
+
+
+
+
+
+    setLoading(true);
     try {
       const config = {
         url: "/Enquiry/createEnquiry",
@@ -245,12 +366,13 @@ const AddNewEnquiry = () => {
         data: {
           clientName: company,
           clientId,
+          executiveId: chosenExecutive?._id,
           products: Products,
           category: subCategory,
           discount: discount,
           GrandTotal: grandTotal,
           GST,
-          clientNo: ClientNo,
+          clientNo: executivePhoneNumber,
           executivename: executive,
           address: venue,
           enquiryDate: deliveryDate
@@ -263,6 +385,8 @@ const AddNewEnquiry = () => {
           placeaddress: placeaddress,
         },
       };
+      console.log(`config: `, config);
+      // return
       const response = await axios(config);
       if (response.status === 200) {
         // Clear form state
@@ -293,16 +417,30 @@ const AddNewEnquiry = () => {
 
         // Navigate after delay
         setTimeout(() => {
-          navigate("/enquiry-list");
+          // navigate("/enquiry-list");
+          window.location.reload();
         }, 1000); // Optional delay for user to see toast
       }
     } catch (error) {
-      console.error(error);
-      if (error.response) {
-        alert(error.response.data.error);
-      } else {
-        alert("An error occurred. Please try again later.");
-      }
+      console.error("error: ", error);
+      // console.log(`toast err: `, error?.response?.data?.error); 
+      // toast.error("An error occurred: ", error?.response?.data?.error);
+      const errorMessage = error?.response?.data?.error ||
+        (error?.message ? `Error: ${error.message}` : "An unexpected error occurred");
+      console.log(`Error message: ${errorMessage}`);
+      toast.error(errorMessage);
+      // const errorMessage = error?.response?.data?.error || 
+      // (error?.message ? `Error: ${error.message}` : "An unexpected error occurred");
+      // toast.error(errorMessage);
+
+
+      // if (error.response) {
+      //   alert("An error occurred: ", error.response.data.error);
+      // } else {
+      //   alert("An error occurred. Please try again later.");
+      // }
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -329,29 +467,30 @@ const AddNewEnquiry = () => {
                         onChange={(e) => setCompany(e.target.value)}
                       >
                         <option value="">Select Company Name</option>
+                        {/* {console.log(`clientData`, clientData)} */}
                         {clientData.map((c) => (
-                          <option key={c.phoneNumber} value={c.clientName}>
-                            {c.clientName}
+                          <option key={c.phoneNumber} value={c.name}>
+                            {c.name}
                           </option>
                         ))}
                       </Form.Select>
                     </Form.Group>
                   </Col>
-                  <Col md={2} className="d-flex align-items-end ">
-                    <Button
-                      size="sm"
-                      style={{
-                        backgroundColor: "#BD5525",
-                        border: "none",
-                        width: "100%",
-                        transition: "background 0.2s",
-                      }}
-                      className="w-100 add-btn"
-                      onClick={() => navigate("/client")}
-                    >
-                      Add Client
-                    </Button>
-                  </Col>
+                  {/* <Col md={2} className="d-flex align-items-end ">
+                      <Button
+                        size="sm"
+                        style={{
+                          backgroundColor: "#BD5525",
+                          border: "none",
+                          width: "100%",
+                          transition: "background 0.2s",
+                        }}
+                        className="w-100 add-btn"
+                        onClick={() => navigate("/client")}
+                      >
+                        Add Client
+                      </Button>
+                    </Col> */}
                   <Col md={6}>
                     <Form.Group>
                       <Form.Label>Executive Name</Form.Label>
@@ -363,7 +502,7 @@ const AddNewEnquiry = () => {
                         <option value="">Select Executive Name</option>
                         {company &&
                           clientData
-                            .find((c) => c.clientName === company)
+                            .find((c) => c.name === company)
                             ?.executives?.map((ex) => (
                               <option key={ex.name} value={ex.name}>
                                 {ex.name}
@@ -694,9 +833,10 @@ const AddNewEnquiry = () => {
                     transition: "background 0.2s",
                   }}
                   className=" add-btn"
+                  disabled={loading}
                   type="submit"
                 >
-                  Submit
+                  {loading ? "Submitting..." : "Submit"}
                 </Button>
               </Col>
             </Row>

@@ -186,8 +186,21 @@ const QuotationDetails = () => {
   const handleCloseGenerateModal = () => setShowGenerateModal(false);
 
   const handleInputChange = (e) => {
+    console.log(`paymentData: `, paymentData);
     const { name, value } = e.target;
-    setPaymentData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'amount') {
+      console.log(`changing amount: `, paymentData.amount);
+      const numericValue = parseFloat(value) || 0;
+      const maxAmount = parseFloat(quotation?.finalTotal) || 0;
+      const finalValue = Math.min(numericValue, maxAmount);
+      console.log(`finalTotal: `, quotation?.finalTotal);
+      console.log(`numericValue: `, numericValue);
+      console.log(`finalValue: `, finalValue);
+      setPaymentData((prev) => ({ ...prev, amount: finalValue.toString() }));
+    } else {
+      setPaymentData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleCheckboxChange = (status) => {
@@ -206,9 +219,10 @@ const QuotationDetails = () => {
     } else if (paymentData.amount > quotation?.finalTotal) {
       toast.error(`Max allowed to be paid is: ${quotation?.finalTotal}`)
       return
-    } else {
-      toast.success("paid")
-    }
+    } 
+    // else {
+    //   toast.success("paid")
+    // }
 
     // toast.success(`executed ${quotation.finalTotal}`)
     // return

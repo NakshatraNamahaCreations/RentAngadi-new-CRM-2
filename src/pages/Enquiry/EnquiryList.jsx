@@ -107,7 +107,7 @@ const EnquiryList = () => {
             Enquiry List
           </h5>
 
-          {/* <Button
+          <Button
             size="sm"
             style={{
               backgroundColor: "#BD5525",
@@ -118,7 +118,7 @@ const EnquiryList = () => {
             className="add-btn"
           >
             Create Enquiry
-          </Button> */}
+          </Button>
         </Card.Body>
       </Card>
 

@@ -306,7 +306,7 @@ const Invoice = () => {
                 </td>
                 <td className="text-center">998596</td>
                 <td className="text-center">{item.quantity || "-"}</td>
-                <td className="text-center">₹{item.ProductPrice}</td>
+                <td className="text-center">₹{item.productPrice}</td>
                 <td className="text-center">{days}</td>
                 <td>₹{(item.total).toFixed(2)}</td>
               </tr>
