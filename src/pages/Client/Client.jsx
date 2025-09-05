@@ -22,6 +22,7 @@ const Client = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   // Fetch clients from API
   useEffect(() => {
@@ -141,6 +142,7 @@ const Client = () => {
     if (!editClient || !editClient._id) return;
     console.log(`editClient: `, editClient);
 
+    setLoading(true);
     try {
       const token = sessionStorage.getItem("token");
       if (newPassword && newPassword !== confirmPassword) {
@@ -172,6 +174,8 @@ const Client = () => {
     } catch (error) {
       console.error('Error updating client:', error);
       alert('Error updating client. Please try again. ' + (error.response?.data?.error || 'Unknown error.'));
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -431,11 +435,11 @@ const Client = () => {
               </Form.Group>
 
               <Modal.Footer>
-                <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                <Button variant="secondary" onClick={() => setShowEditModal(false)} disabled={loading}>
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit">
-                  Update Client
+                <Button variant="primary" type="submit" disabled={loading}>
+                  {loading ? "Updating..." : "Update Client"}
                 </Button>
               </Modal.Footer>
             </Form>

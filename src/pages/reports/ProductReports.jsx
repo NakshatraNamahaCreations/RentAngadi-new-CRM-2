@@ -238,6 +238,7 @@ const ProductReports = () => {
         year: selectedYear,
         month: selectedMonth,
       });
+      console.log(`reponse data: `, data);
       setReportData(data);
     } catch (error) {
       console.error('Error fetching report:', error);
@@ -260,10 +261,27 @@ const ProductReports = () => {
 
   const sortProducts = (products) => {
     const { key, direction } = sortConfig;
+    console.log(`prods: `, products);
     return [...products].sort((a, b) => {
-      const aVal = typeof a[key] === 'number' ? a[key] : a[key]?.toString().toLowerCase();
-      const bVal = typeof b[key] === 'number' ? b[key] : b[key]?.toString().toLowerCase();
-      return direction === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal > bVal ? -1 : 1);
+      let aVal = a[key];
+      let bVal = b[key];
+
+      // Handle null or undefined as 0 for numbers
+      if (typeof aVal === 'number') {
+        aVal = aVal ?? 0;
+      } else {
+        aVal = aVal ? aVal.toString().toLowerCase() : '';
+      }
+
+      if (typeof bVal === 'number') {
+        bVal = bVal ?? 0;
+      } else {
+        bVal = bVal ? bVal.toString().toLowerCase() : '';
+      }
+
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
     });
   };
 

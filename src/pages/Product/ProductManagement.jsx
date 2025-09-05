@@ -17,9 +17,11 @@ const ProductManagement = () => {
   const itemsPerPage = 10;
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Fetch products from API
   const fetchProducts = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
         `${ApiURL}/product/getinventoryproducts`
@@ -31,6 +33,8 @@ const ProductManagement = () => {
       }
     } catch (error) {
       console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,6 +147,16 @@ const ProductManagement = () => {
     indexOfFirstItem,
     indexOfLastItem
   );
+
+  // if (loading) {
+  //   return (
+  //     <Container className="my-5">
+  //       <Card className="shadow-lg border-0 rounded-4 p-5 text-center">
+  //         <h5>Loading products...</h5>
+  //       </Card>
+  //     </Container>
+  //   );
+  // }
 
   return (
     <Container style={{ background: "#F4F4F4", paddingBlock: "20px" }}>

@@ -283,7 +283,7 @@ const PaymentReport = () => {
               style={{ backgroundColor: "#323D4F", fontSize: "12px" }}
             >
               <tr>
-                <th style={{ width: "5%" }}>
+                {/* <th style={{ width: "5%" }}>
                   <Form.Check
                     type="checkbox"
                     checked={
@@ -292,7 +292,7 @@ const PaymentReport = () => {
                     }
                     onChange={handleSelectAll}
                   />
-                </th>
+                </th> */}
                 <th>Payment Date</th>
                 {/* <th>Payment ID</th> */}
                 <th>Company name</th>
@@ -309,13 +309,13 @@ const PaymentReport = () => {
                 const id = payment._id || payment.id;
                 return (
                   <tr key={id} className="text-center">
-                    <td>
+                    {/* <td>
                       <Form.Check
                         type="checkbox"
                         checked={selectedRows.includes(id)}
                         onChange={() => handleSelectRow(id)}
                       />
-                    </td>
+                    </td> */}
                     <td style={{ fontSize: "12px" }}>
                       {moment(payment.createdAt || payment.paymentDate).format(
                         "DD/MM/YYYY hh:mm A"

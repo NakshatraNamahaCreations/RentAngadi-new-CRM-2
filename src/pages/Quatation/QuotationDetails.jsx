@@ -59,6 +59,7 @@ const QuotationDetails = () => {
 
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [paymentData, setPaymentData] = useState({
     status: "Online",
@@ -213,20 +214,20 @@ const QuotationDetails = () => {
       console.log(`typeof payment.amount `, typeof paymentData.amount);
       toast.error("Amount cannot be empty or zero")
       return
-    } else if (!paymentData.mode) {
-      toast.error("Please select a payment mode")
-      return
     } else if (paymentData.amount > quotation?.finalTotal) {
       toast.error(`Max allowed to be paid is: ${quotation?.finalTotal}`)
       return
-    } 
-    // else {
-    //   toast.success("paid")
-    // }
+    }
 
-    // toast.success(`executed ${quotation.finalTotal}`)
+    if (paymentData.status === 'Online' && (!paymentData.mode)) {
+      toast.error("Please select a payment mode")
+      return
+    }
+
+    // toast.success(`executed total: Rs. ${quotation.finalTotal}`)
     // return
 
+    setPaymentLoading(true)
     try {
       // First, make the API call to fetch payment data
       const orderDetails = {
@@ -256,6 +257,7 @@ const QuotationDetails = () => {
       // Optionally handle any errors that occur during the API request
     } finally {
       handleCloseGenerateModal();
+      setPaymentLoading(false)
     }
   };
 
@@ -332,6 +334,8 @@ const QuotationDetails = () => {
   };
 
   const handleGenerateOrder = async () => {
+    setPaymentLoading(true)
+
     try {
       console.log(`handleGenerateOrder quotation: `, quotation);
       // Prepare the order details from quotationDetails
@@ -439,6 +443,7 @@ const QuotationDetails = () => {
       console.error("Error creating order:", error);
     } finally {
       handleCloseGenerateModal();
+      setPaymentLoading(false)
     }
   };
 
@@ -1948,6 +1953,7 @@ const QuotationDetails = () => {
                   onChange={handleInputChange}
                   placeholder="0"
                   style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                  min={0.01}
                 />
               </div>
             </Form.Group>
@@ -2032,7 +2038,8 @@ const QuotationDetails = () => {
             onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
             onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
             onClick={handleAddPayment}
-          // onClick={handleUpdateQuotation}
+            // onClick={handleUpdateQuotation}
+            disabled={paymentLoading}
           >
             Add
           </Button>
@@ -2049,6 +2056,7 @@ const QuotationDetails = () => {
             onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
             onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
             onClick={handleGenerateOrder}
+            disabled={paymentLoading}
           >
             Skip
           </Button>
@@ -2065,6 +2073,7 @@ const QuotationDetails = () => {
             onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
             onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
             onClick={handleCloseGenerateModal}
+            disabled={paymentLoading}
           >
             Close
           </Button>

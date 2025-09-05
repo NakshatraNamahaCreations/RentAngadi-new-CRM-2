@@ -48,6 +48,7 @@ const AddClient = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [phoneErrors, setPhoneErrors] = useState([]);
   const [clientPhoneErrors, setClientPhoneErrors] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Phone number validation function
   const validatePhone = (phone) => {
@@ -135,6 +136,7 @@ const AddClient = () => {
 
     // console.log(`payload: `, payload);
 
+    setLoading(true)
     try {
       const res = await axios.post(`${ApiURL}/client/addClients`, payload);
       if (res.status === 200) {
@@ -156,6 +158,8 @@ const AddClient = () => {
       }
     } catch (error) {
       setErrorMessage("Failed to add client. Please try again.");
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -314,8 +318,9 @@ const AddClient = () => {
                 backgroundColor: "#323D4F",
                 border: "none",
               }}
+              disabled={loading}
             >
-              Add Client
+              {loading ? "Adding..." : "Add Client"}
             </Button>
 
             {successMessage && (

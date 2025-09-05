@@ -55,6 +55,8 @@ const OrderDetails = () => {
   // States for order details
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [addProductLoading, setAddProductLoading] = useState(false);
+  const [addPaymentLoading, setAddPaymentLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [showRefModal, setShowRefModal] = useState(false);
 
@@ -486,6 +488,7 @@ const OrderDetails = () => {
 
     // Log the request data to console
     console.log("Request Data to be sent:", requestData);
+    setAddProductLoading(true)
 
     try {
       // Send the updated quantity to the backend for processing
@@ -514,6 +517,7 @@ const OrderDetails = () => {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setShowAdd(false);
+      setAddProductLoading(false)
     }
   };
 
@@ -579,7 +583,7 @@ const OrderDetails = () => {
           quantity: editQty, // The new quantity
           quoteDate: order.slots[0].quoteDate, // Start date of the slot
           endDate: order.slots[0].endDate, // End date of the slot
-          productQuoteDate: productQuoteDate || order.slots[0].products[idx]?.productQuoteDate ||order.slots[0].quoteDate,
+          productQuoteDate: productQuoteDate || order.slots[0].products[idx]?.productQuoteDate || order.slots[0].quoteDate,
           productEndDate: productEndDate || order.slots[0].products[idx]?.productEndDate || order.slots[0].endDate,
           productSlot, // Slot information
         }
@@ -833,7 +837,8 @@ const OrderDetails = () => {
   const grandTotal = order ? calculateGrandTotal(order) : 0;
 
   useEffect(() => {
-    const paid = order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)
+    // const paid = order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)
+    const paid = (order?.payments || []).reduce((acc, curr) => acc + curr?.advancedAmount, 0);
     setAmountPaid(paid)
 
     if (order?.roundOff !== 0) {
@@ -957,23 +962,32 @@ const OrderDetails = () => {
 
   const handleAddPayment = async () => {
 
+    // if (!paymentData.amount || paymentData.amount === '' || paymentData.amount === '0' || paymentData.amount === 0) {
+    //   console.log(`typeof payment.amount `, typeof paymentData.amount);
+    //   toast.error("Amount cannot be empty or zero")
+    //   return
+    // } else if (!paymentData.mode) {
+    //   toast.error("Please select a payment mode")
+    //   return
+    // }
     if (!paymentData.amount || paymentData.amount === '' || paymentData.amount === '0' || paymentData.amount === 0) {
       console.log(`typeof payment.amount `, typeof paymentData.amount);
       toast.error("Amount cannot be empty or zero")
       return
-    } else if (!paymentData.mode) {
-      toast.error("Please select a payment mode")
-      return
-    } else if (paymentData.amount > amountPending) {
-      console.log(`amountPending: `, amountPending);
-      toast.error("Please pay no more than Amount Pending")
+    } else if (paymentData.amount > order?.GrandTotal) {
+      toast.error(`Max allowed to be paid is: ${order?.GrandTotal}`)
       return
     }
 
-    // else {
-    //   toast.success("paid")
-    // }
+    if (paymentData.status === 'Online' && (!paymentData.mode)) {
+      toast.error("Please select a payment mode")
+      return
+    }
+
+    // toast.success(`executed total: Rs. ${order?.GrandTotal}`)
     // return
+
+    setAddPaymentLoading(true)
 
     try {
       // First, make the API call to fetch payment data
@@ -1004,6 +1018,7 @@ const OrderDetails = () => {
       // Optionally handle any errors that occur during the API request
     } finally {
       handleCloseGenerateModal();
+      setAddPaymentLoading(false);
     }
   };
 
@@ -1192,7 +1207,7 @@ const OrderDetails = () => {
                     onClick={handleShowAdd}
                     disabled={order && order.orderStatus === "cancelled"}
                   >
-                    Add Product
+                    {addProductLoading ? "Adding Product..." : "Add Product"}
                   </Button>
                   {/* <Button
                     variant="outline-success"
@@ -1437,7 +1452,7 @@ const OrderDetails = () => {
                           )}
                         </td>
                         <td>{prod.days}</td>
-                    {/* you have t comment these 2 */}
+                        {/* you have t comment these 2 */}
                         <td>₹{(prod.productPrice)}</td>
                         <td>₹{prod.productTotal}</td>
                         {/* {(idx === 0) && console.log(`prod.total * days: ${prod.total * days} prod.productName: ${prod.productName}prod.total: ${prod.total}`)} */}
@@ -1975,7 +1990,8 @@ const OrderDetails = () => {
                 <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
                   Amount already Paid
                 </Form.Label>
-                {console.log("payments: ", order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0))}
+                {/* {console.log("payments: ", order?.payments?.reduce((acc, curr) => acc + curr?.advancedAmount, 0))} */}
+                {console.log("payments: ", (order?.payments || []).reduce((acc, curr) => acc + curr?.advancedAmount, 0))}
                 <div className="d-flex align-items-center">
                   <span
                     style={{
@@ -2000,7 +2016,8 @@ const OrderDetails = () => {
                 <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
                   Amount Pending
                 </Form.Label>
-                {console.log("payments: ", order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0))}
+                {/* {console.log("payments: ", order?.payments?.reduce((acc, curr) => acc + curr?.advancedAmount, 0))} */}
+                {console.log("payments: ", (order?.payments || []).reduce((acc, curr) => acc + curr?.advancedAmount, 0))}
                 <div className="d-flex align-items-center">
                   <span
                     style={{
@@ -2078,6 +2095,7 @@ const OrderDetails = () => {
                 // TODO: Implement payment submission logic here
                 handleAddPayment();
               }}
+              disabled={addPaymentLoading}
             >
               Add
             </Button>
@@ -2092,6 +2110,7 @@ const OrderDetails = () => {
               }}
               className="btn-sm"
               onClick={handleCloseGenerateModal}
+              disabled={addPaymentLoading}
             >
               Close
             </Button>

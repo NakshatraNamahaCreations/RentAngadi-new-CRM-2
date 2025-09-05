@@ -1092,30 +1092,17 @@ const EnquiryDetails = () => {
                         : discount
                     }
                     placeholder="Discount in percentage"
-                    onChange={(e) => setDiscount(e.target.value)}
+                    // onChange={(e) => setDiscount(e.target.value)}
                     disabled={enquiry?.status === "sent"}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group>
-                  <Form.Label>
-                    Grand Total <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={
-                      enquiry?.status === "sent"
-                        ? enquiry.quotationData.GrandTotal
-                        : grandTotal
-                    }
-                    readOnly
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+                    min={0.01}
+                    onChange={(e) => {
+                      const computedValue = Math.min(100, e.target.value);  // Limit discount to 10 max
+                      setDiscount(computedValue);
+                    }}
 
-            <Row className="align-items-end">
+                  />
+                </Form.Group>
+              </Col>
               <Col md={3}>
                 <Form.Group>
                   <Form.Label>GST</Form.Label>
@@ -1135,6 +1122,25 @@ const EnquiryDetails = () => {
                     onChange={(opt) => setGst(opt ? opt.value : "")}
                     placeholder="Select GST"
                     isDisabled={enquiry?.status === "sent"}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="align-items-end">
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>
+                    Grand Total <span style={{ color: "red" }}>*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={
+                      enquiry?.status === "sent"
+                        ? enquiry.quotationData.GrandTotal
+                        : grandTotal
+                    }
+                    readOnly
                   />
                 </Form.Group>
               </Col>
@@ -1189,9 +1195,9 @@ const EnquiryDetails = () => {
               </Col> */}
           </Form>
         </Container>
-      </div>
+      </div >
       {/* )} */}
-      <div
+      < div
         style={{
           position: "fixed",
           left: "20%", // <-- Adjust this to your sidebar width
@@ -1222,17 +1228,17 @@ const EnquiryDetails = () => {
                   variant="success"
                   size="sm"
                   style={{ fontWeight: 600, background: "#BD5525", border: "#BD5525" }}
-                  disabled={totalAmount === 0 || isAnyProductInsufficient}
+                  disabled={totalAmount === 0 || isAnyProductInsufficient || loading}
                   onClick={handleCreateQuote}
                 >
-                  Create Quotation
+                  {loading ? "Creating Quotation..." : "Create Quotation"}
                 </Button>
               )}
             </Col>
           </Row>
         </Container>
-      </div>
-    </Container>
+      </div >
+    </Container >
   );
 };
 

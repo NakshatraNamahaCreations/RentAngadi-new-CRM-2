@@ -38,17 +38,14 @@ function setStoredProducts(products) {
   localStorage.setItem(ENQUIRY_PRODUCTS_KEY, JSON.stringify(products));
 }
 
-function getRandomItems(array, n) {
-  const shuffled = [...array].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, n);
-}
-
 const AddNewEnquiry = () => {
   const navigate = useNavigate();
   const [clientData, setClientData] = useState([]);
   // Form state
   const [company, setCompany] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [executive, setExecutive] = useState("");
+  const [executiveId, setExecutiveId] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [dismantleDate, setDismantleDate] = useState("");
   const [venue, setVenue] = useState("");
@@ -150,62 +147,6 @@ const AddNewEnquiry = () => {
     }
   };
 
-  useEffect(() => {
-    if (clientData.length > 0 && allProducts.length > 0) {
-      // 1. Choose first company
-      const company = clientData[0];
-      setCompany(company.name);
-
-      // 2. Choose random executive from this company
-      if (company.executives?.length > 0) {
-        const randomExec =
-          company.executives[
-          Math.floor(Math.random() * company.executives.length)
-          ];
-        setExecutive(randomExec.name);
-      }
-
-      // 3. Delivery & dismantle dates
-      const today = new Date();
-      const delivery = today;
-      const dismantle = new Date(today);
-      console.log(`random: `, Math.random() * 10);
-      dismantle.setDate(today.getDate() + Math.random() * 10); // 5 days later
-
-      setDeliveryDate(delivery);
-      setDismantleDate(dismantle);
-
-      // 4. Random slot
-      // const slot =
-      //   deliveryDismantleSlots[
-      //   Math.floor(Math.random() * deliveryDismantleSlots.length)
-      //   ];
-      const slot =
-        deliveryDismantleSlots[Math.floor(Math.random() * (deliveryDismantleSlots.length - 1)) + 1];
-
-      setSelectedSlot(slot);
-
-      // 5. Venue address: random + timestamp
-      // setVenue(`Auto venue ${new Date().toLocaleString()}`);
-      // setVenue(`Auto venue ${new Date().toUTCString()}`);
-      setVenue(`Auto venue`);
-
-      // 6. Sub Category: Sofa
-      setSubCategory("Sofa");
-
-      // 7. Choose random 3 sofa products
-      const sofaProducts = allProducts.filter(
-        (p) => p.ProductSubcategory?.toLowerCase() === "sofa"
-      );
-      const picked = getRandomItems(sofaProducts, 3).map((p) => ({
-        ...p,
-        qty: 1,
-        total: p.ProductPrice,
-      }));
-      setSelectedProducts(picked);
-    }
-  }, [clientData, allProducts]);
-
   const handleSubcategorySelection = (e) => {
     const subcategory = e.target.value;
     setSubCategory(subcategory);
@@ -295,16 +236,16 @@ const AddNewEnquiry = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const chosenClient = clientData.find((c) => c.name === company);
+    const chosenClient = clientData.find((c) => c._id === companyId);
 
     if (!chosenClient) {
-      alert("Company not found. Choose company");
+      alert("Please fill all required fields");
       return;
     }
 
     // Validation (add more as needed)
     if (
-      !company ||
+      !companyId ||
       // (chosenClient.executives.length > 0 && !executive) ||
       !deliveryDate ||
       !dismantleDate ||
@@ -321,19 +262,16 @@ const AddNewEnquiry = () => {
       return;
     }
 
-
-    const clientId = chosenClient._id
-
     const executives = chosenClient.executives;
 
     let chosenExecutive = ''
     if (executives.length === 0) {
       chosenExecutive = ''
     } else {
-      chosenExecutive = executives.find((e) => e.name === executive)
+      chosenExecutive = executives.find((e) => e._id === executiveId)
     }
 
-    const executivePhoneNumber = chosenExecutive?.phoneNumber;
+    // const executivePhoneNumber = chosenExecutive?.phoneNumber;
 
     // Prepare products array for API
     const Products = selectedProducts.map((p) => ({
@@ -364,16 +302,16 @@ const AddNewEnquiry = () => {
         baseURL: ApiURL,
         headers: { "content-type": "application/json" },
         data: {
-          clientName: company,
-          clientId,
+          clientName: chosenClient.name,
+          clientId: companyId,
           executiveId: chosenExecutive?._id,
           products: Products,
           category: subCategory,
           discount: discount,
           GrandTotal: grandTotal,
           GST,
-          clientNo: executivePhoneNumber,
-          executivename: executive,
+          clientNo: chosenExecutive?.phoneNumber,
+          executivename: chosenExecutive?.name,
           address: venue,
           enquiryDate: deliveryDate
             ? moment(deliveryDate).format("DD-MM-YYYY")
@@ -385,8 +323,11 @@ const AddNewEnquiry = () => {
           placeaddress: placeaddress,
         },
       };
-      console.log(`config: `, config);
+      console.log(`config: `, config.data);
+
+      // toast.success('exected add enq')
       // return
+
       const response = await axios(config);
       if (response.status === 200) {
         // Clear form state
@@ -463,13 +404,15 @@ const AddNewEnquiry = () => {
                     <Form.Group>
                       <Form.Label>Company Name</Form.Label>
                       <Form.Select
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
+                        // value={company}
+                        value={companyId}
+                        onChange={(e) => setCompanyId(e.target.value)}
                       >
                         <option value="">Select Company Name</option>
                         {/* {console.log(`clientData`, clientData)} */}
                         {clientData.map((c) => (
-                          <option key={c.phoneNumber} value={c.name}>
+                          // <option key={c.phoneNumber} value={c.name}>
+                          <option key={c._id} value={c._id}>
                             {c.name}
                           </option>
                         ))}
@@ -495,16 +438,17 @@ const AddNewEnquiry = () => {
                     <Form.Group>
                       <Form.Label>Executive Name</Form.Label>
                       <Form.Select
-                        value={executive}
-                        onChange={(e) => setExecutive(e.target.value)}
-                        disabled={!company}
+                        value={executiveId}
+                        onChange={(e) => setExecutiveId(e.target.value)}
+                        disabled={!companyId}
                       >
                         <option value="">Select Executive Name</option>
-                        {company &&
+                        {companyId &&
                           clientData
-                            .find((c) => c.name === company)
+                            .find((c) => c._id === companyId)
                             ?.executives?.map((ex) => (
-                              <option key={ex.name} value={ex.name}>
+                              // <option key={ex.name} value={ex.name}>
+                              <option key={ex._id} value={ex._id}>
                                 {ex.name}
                               </option>
                             ))}
@@ -843,7 +787,7 @@ const AddNewEnquiry = () => {
           </Form>
         </Card.Body>
       </Card>
-    </Container>
+    </Container >
   );
 };
 
