@@ -157,7 +157,9 @@ const AddClient = () => {
         setErrorMessage("Failed to add client. Please try again.");
       }
     } catch (error) {
-      setErrorMessage("Failed to add client. Please try again.");
+      console.log(`error: `, error);
+      console.log(`error.response.data.error: `, error.response.data.error);
+      setErrorMessage(`Failed to add client: ${error.response.data.error}`);
     } finally {
       setLoading(false)
     }

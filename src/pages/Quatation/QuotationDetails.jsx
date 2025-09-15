@@ -84,6 +84,8 @@ const QuotationDetails = () => {
   const [editTransport, setEditTransport] = useState(false);
   const [refurbishment, setRefurbishment] = useState(0);
   const originalQuotationRef = React.useRef(null);
+  const [editDraft, setEditDraft] = useState({});
+
 
   // const [grandTotal, setGrandTotal] = useState(0)
 
@@ -339,8 +341,10 @@ const QuotationDetails = () => {
   const handleGenerateOrder = async () => {
     setPaymentLoading(true)
 
+
     try {
       console.log(`handleGenerateOrder quotation: `, quotation);
+      // await handleUpdateQuotation();
       // Prepare the order details from quotationDetails
       const orderDetails = {
         quoteId: quotation.quoteId,
@@ -453,62 +457,119 @@ const QuotationDetails = () => {
   // console.log("selectedAddProduct: ", selectedAddProduct)
   // console.log("quotation: ", quotation)
 
-  const handleDateChange = (productId, dateType, date, productSlot) => {
-    // Update the productDates state with the new date and slot value
-    setProductDates((prev) => ({
+  // const handleDateChange = (productId, dateType, date, productSlot) => {
+  //   // Update the productDates state with the new date and slot value
+  //   setProductDates((prev) => ({
+  //     ...prev,
+  //     [productId]: {
+  //       ...prev[productId],
+  //       [dateType]: date,
+  //       productSlot: productSlot,
+  //     },
+  //   }));
+  // };
+
+  // const handleDateChange = (productId, field, value) => {
+  //   setProductDates((prev) => {
+  //     const current = prev[productId] || {};
+
+  //     if (field === "productSlot") {
+  //       // value here is the slot string (from dropdown)
+  //       return {
+  //         ...prev,
+  //         [productId]: {
+  //           ...current,
+  //           productSlot: value,
+  //         },
+  //       };
+  //     }
+
+  //     // field is productQuoteDate or productEndDate
+  //     return {
+  //       ...prev,
+  //       [productId]: {
+  //         ...current,
+  //         [field]: value,
+  //       },
+  //     };
+  //   });
+  // };
+
+  const handleDateChange = (productId, field, value) => {
+    setEditDraft((prev) => ({
       ...prev,
       [productId]: {
         ...prev[productId],
-        [dateType]: date,
-        productSlot: productSlot,
+        [field]: value,
       },
     }));
   };
+
+
+
+
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = () => {
     if (!quotation || !originalQuotationRef.current) return false;
     const original = originalQuotationRef.current;
 
-    // Check top-level changes
+    const normalizeNumber = (v) => Number(v || 0);
+    const normalizeDateString = (v) => {
+      if (!v) return "";
+      if (v instanceof Date && !isNaN(v)) return formatDateToDDMMYYYY(v) || "";
+      return String(v || "");
+    };
+
+    // Check top-level material changes (exclude totals to avoid false positives)
     const topLevelKeys = ["discount", "transportcharge", "labourecharge", "refurbishment", "GST"];
     for (const key of topLevelKeys) {
-      if (Number(quotation?.[key] || 0) !== Number(original?.[key] || 0)) {
+      if (normalizeNumber(quotation?.[key]) !== normalizeNumber(original?.[key])) {
         return true;
       }
     }
 
-    // Check GrandTotal change
-    const nextGrandTotal = Number(quotation?.finalTotal || quotation?.GrandTotal || 0);
-    const prevGrandTotal = Number(original?.finalTotal || original?.GrandTotal || 0);
-    if (nextGrandTotal !== prevGrandTotal) {
-      return true;
-    }
+    // Check product changes in slots with normalized comparison
+    const currentSlots = quotation?.slots || [];
+    const originalSlots = original?.slots || [];
 
-    // Check product changes in slots
-    for (let slotIdx = 0; slotIdx < (quotation?.slots || []).length; slotIdx++) {
-      const slot = quotation.slots[slotIdx];
-      const origSlot = (original?.slots || [])[slotIdx] || {};
+    // If number of slots changed
+    if (currentSlots.length !== originalSlots.length) return true;
 
-      for (const p of slot.Products || []) {
-        const origP = (origSlot.Products || []).find((op) => String(op.productId) === String(p.productId)) || {};
-        const nextQty = p.qty || p.quantity || 0;
-        const prevQty = origP.qty || origP.quantity || 0;
-        const nextTotal = p.total || 0;
-        const prevTotal = origP.total || 0;
-        const nextPQD = p.productQuoteDate || null;
-        const prevPQD = origP.productQuoteDate || null;
-        const nextPED = p.productEndDate || null;
-        const prevPED = origP.productEndDate || null;
-        const nextSlotVal = p.productSlot || null;
-        const prevSlotVal = origP.productSlot || null;
+    for (let slotIdx = 0; slotIdx < currentSlots.length; slotIdx++) {
+      const slot = currentSlots[slotIdx] || {};
+      const origSlot = originalSlots[slotIdx] || {};
+
+      const currProducts = slot.Products || [];
+      const origProducts = origSlot.Products || [];
+
+      // Product count changed
+      if (currProducts.length !== origProducts.length) return true;
+
+      for (const p of currProducts) {
+        const origP = origProducts.find((op) => String(op.productId) === String(p.productId)) || {};
+
+        const nextQty = normalizeNumber(p.qty || p.quantity);
+        const prevQty = normalizeNumber(origP.qty || origP.quantity);
+
+        const nextTotal = normalizeNumber(p.total);
+        const prevTotal = normalizeNumber(origP.total);
+
+        const nextPQD = normalizeDateString(p.productQuoteDate);
+        const prevPQD = normalizeDateString(origP.productQuoteDate);
+
+        const nextPED = normalizeDateString(p.productEndDate);
+        const prevPED = normalizeDateString(origP.productEndDate);
+
+        const nextSlotVal = String(p.productSlot || "");
+        const prevSlotVal = String(origP.productSlot || "");
 
         const hasChange =
-          Number(nextQty) !== Number(prevQty) ||
-          Number(nextTotal) !== Number(prevTotal) ||
-          String(nextPQD || "") !== String(prevPQD || "") ||
-          String(nextPED || "") !== String(prevPED || "") ||
-          String(nextSlotVal || "") !== String(prevSlotVal || "");
+          nextQty !== prevQty ||
+          nextTotal !== prevTotal ||
+          nextPQD !== prevPQD ||
+          nextPED !== prevPED ||
+          nextSlotVal !== prevSlotVal;
 
         if (hasChange) return true;
       }
@@ -518,12 +579,18 @@ const QuotationDetails = () => {
   };
 
   const handleDownloadPDFClick = async () => {
+    console.log(`handleDownloadPDFClick `,);
     if (hasUnsavedChanges()) {
       const shouldSave = window.confirm(
         "You have unsaved changes. Do you want to save the quotation before downloading PDF?"
       );
       if (shouldSave) {
-        await handleUpdateQuotation();
+        const result = await handleUpdateQuotation();
+        if (result !== true) {
+          return
+        }
+      } else {
+        return
       }
     }
     navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } });
@@ -722,21 +789,109 @@ const QuotationDetails = () => {
   // Grand total
   const grandTotal = Math.round(afterDiscount + gstAmt);
 
-  const handleEdit = (idx, qty) => {
+  // const handleEdit = (idx, qty) => {
+  //   setEditIdx(idx);
+  //   setEditQty(qty);
+  // };
+
+  const handleEdit = (idx, qty, item) => {
+    console.log(`handleEdit `, idx, qty, item);
     setEditIdx(idx);
     setEditQty(qty);
+
+    // preload current values into draft
+    setEditDraft((prev) => ({
+      ...prev,
+      [item.productId]: {
+        productQuoteDate: parseDate(item.quoteDate),
+        productEndDate: parseDate(item.endDate),
+        productSlot: item.productSlot || quotation?.slots[0]?.quoteTime,
+      },
+    }));
   };
 
-  // Save the new qty (with API call)
-  const handleEditSave = async (item) => {
-    if (editQty < 1 || editQty > item.available) {
-      toast.error("Quantity must be between 1 and less than available stock!");
-      return;
-    }
 
-    const productDateDetails = productDates[item.productId] || {};
 
-    // Update the quantity in the correct slot/product in local state
+
+
+  // // Save the new qty (with API call)
+  // const handleEditSave = async (item) => {
+  //   if (editQty < 1 || editQty > item.available) {
+  //     toast.error("Quantity must be between 1 and less than available stock!");
+  //     return;
+  //   }
+
+  //   const productDateDetails = productDates[item.productId] || {};
+
+  //   // Update the quantity in the correct slot/product in local state
+  //   const updatedSlots = quotation.slots.map((slot) => ({
+  //     ...slot,
+  //     Products: (slot.Products || []).map((prod) =>
+  //       prod.productId === item.productId
+  //         ? {
+  //           ...prod,
+  //           qty: editQty,
+  //           quantity: editQty,
+  //           total: editQty * (prod.price || item.pricePerUnit),
+  //           productQuoteDate: productDateDetails.productQuoteDate
+  //             ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
+  //             : prod.productQuoteDate,
+  //           productEndDate: productDateDetails.productEndDate
+  //             ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
+  //             : prod.productEndDate,
+  //           productSlot: productDateDetails.productSlot,
+  //         }
+  //         : prod
+  //     ),
+  //   }));
+
+  //   const updatedItems = items.map((currentItem) => {
+  //     // Check if the current item is the one being edited
+  //     if (currentItem.productId === item.productId) {
+  //       return {
+  //         ...currentItem,
+  //         quantity: editQty, // Update the quantity
+  //         total: editQty * currentItem.pricePerUnit, // Recalculate the total
+  //         productQuoteDate: productDateDetails.productQuoteDate
+  //           ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
+  //           : currentItem.productQuoteDate,
+
+  //         productEndDate: productDateDetails.productEndDate
+  //           ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
+  //           : currentItem.productEndDate,
+
+
+  //         productSlot: productDateDetails.productSlot,
+  //       };
+  //     }
+  //     // If the item is not the one being edited, return it unchanged
+  //     return currentItem;
+  //   });
+
+  //   // Update the state with the new `updatedItems` array
+  //   setItems(updatedItems);
+
+
+  //   console.log("updatedSlots: ", updatedSlots)
+  //   setQuotation({ ...quotation, slots: updatedSlots });
+  //   setEditIdx(null);
+  //   setEditQty(1);
+  // };
+
+  const handleEditSave = (item) => {
+    const draft = editDraft[item.productId];
+    if (!draft) return;
+
+    // commit draft into productDates
+    setProductDates((prev) => ({
+      ...prev,
+      [item.productId]: {
+        ...prev[item.productId],
+        ...draft,
+      },
+    }));
+
+    // update slots inside quotation
     const updatedSlots = quotation.slots.map((slot) => ({
       ...slot,
       Products: (slot.Products || []).map((prod) =>
@@ -746,50 +901,54 @@ const QuotationDetails = () => {
             qty: editQty,
             quantity: editQty,
             total: editQty * (prod.price || item.pricePerUnit),
-            productQuoteDate: productDateDetails.productQuoteDate
-              ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
-              : prod.productQuoteDate,
-            productEndDate: productDateDetails.productEndDate
-              ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
-              : prod.productEndDate,
-            productSlot: productDateDetails.productSlot,
+            productQuoteDate: formatDateToDDMMYYYY(draft.productQuoteDate),
+            productEndDate: formatDateToDDMMYYYY(draft.productEndDate),
+            productSlot: draft.productSlot,
           }
           : prod
       ),
     }));
 
-    const updatedItems = items.map((currentItem) => {
-      // Check if the current item is the one being edited
-      if (currentItem.productId === item.productId) {
-        return {
-          ...currentItem,
-          quantity: editQty, // Update the quantity
-          total: editQty * currentItem.pricePerUnit, // Recalculate the total
-          productQuoteDate: productDateDetails.productQuoteDate
-            ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
-            : currentItem.productQuoteDate,
+    // update items table
+    const updatedItems = items.map((row) =>
+      row.productId === item.productId
+        ? {
+          ...row,
+          quantity: editQty,
+          total: editQty * row.pricePerUnit,
+          productQuoteDate: formatDateToDDMMYYYY(draft.productQuoteDate),
+          productEndDate: formatDateToDDMMYYYY(draft.productEndDate),
+          productSlot: draft.productSlot,
+        }
+        : row
+    );
 
-          productEndDate: productDateDetails.productEndDate
-            ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
-            : currentItem.productEndDate,
-
-
-          productSlot: productDateDetails.productSlot,
-        };
-      }
-      // If the item is not the one being edited, return it unchanged
-      return currentItem;
-    });
-
-    // Update the state with the new `updatedItems` array
     setItems(updatedItems);
-
-
-    console.log("updatedSlots: ", updatedSlots)
     setQuotation({ ...quotation, slots: updatedSlots });
+
+    // clear edit mode
     setEditIdx(null);
     setEditQty(1);
+    setEditDraft((prev) => {
+      const copy = { ...prev };
+      delete copy[item.productId];
+      return copy;
+    });
   };
+
+  const handleCancelEdit = (productId) => {
+    setEditIdx(null);
+    setEditQty(1);
+
+    setEditDraft((prev) => {
+      const copy = { ...prev };
+      delete copy[productId];
+      return copy;
+    });
+  };
+
+
+
 
   // Delete a product (with API call)
   const handleDelete = async (item) => {
@@ -934,10 +1093,11 @@ const QuotationDetails = () => {
       if (response.status === 200) {
         toast.success("Quotation updated successfully");
         originalQuotationRef.current = JSON.parse(JSON.stringify(quotation || {}));
+        return true;
       }
     } catch (error) {
       console.error("Error updating quotation:", error);
-      toast.error("Failed to update quotation");
+      toast.error(`Failed to update quotation: ${error?.message}`);
     }
   };
 
@@ -1471,11 +1631,13 @@ const QuotationDetails = () => {
                     </td>
                     <td style={{ verticalAlign: "middle", width: "25%" }}>
                       <div className="d-flex">
-                        {console.log(`item: `, idx, item, productDates[item.productId])}
+                        {/* {console.log(`item: `, idx, item, productDates[item.productId])} */}
+                        {/* {console.log(`editDraft: `, editIdx, editDraft)} */}
                         {editIdx === idx ? (
                           <DatePicker
                             selected={
-                              productDates[item.productId]?.productQuoteDate ||
+                              // productDates[item.productId]?.productQuoteDate ||
+                              editDraft[item.productId]?.productQuoteDate ||
                               // '12-12-2023'|| parseDate(item.quoteDate) ||
                               parseDate(item.quoteDate)
                             } // Default to product's own quote date
@@ -1517,7 +1679,8 @@ const QuotationDetails = () => {
                         {editIdx === idx ? (
                           <DatePicker
                             selected={
-                              productDates[item.productId]?.productEndDate ||
+                              // productDates[item.productId]?.productEndDate ||
+                              editDraft[item.productId]?.productEndDate ||
                               parseDate(item.endDate)
                             } // Default to initial endDate
                             onChange={(date) =>
@@ -1558,9 +1721,10 @@ const QuotationDetails = () => {
                       <Form.Select
                         className="m-0 mt-1"
                         value={
-                          productDates[item.productId]?.productSlot ||
+                          // productDates[item.productId]?.productSlot ||
                           //  "Slot 3: 11:00 PM to 11:45 PM" 
                           // || 
+                          editDraft[item.productId]?.productSlot ||
                           item.productSlot ||
                           quotation?.quoteTime
                         }
@@ -1645,6 +1809,30 @@ const QuotationDetails = () => {
                     </td>
                     <td style={{ padding: "12px", verticalAlign: "middle" }}>
                       {editIdx === idx ? (
+                        // <>
+                        //   <Button
+                        //     variant="success"
+                        //     size="sm"
+                        //     style={{ padding: "2px 6px", marginRight: 4 }}
+                        //     onClick={() => handleEditSave(item)}
+                        //     disabled={
+                        //       loading || quotation.status === "cancelled"
+                        //     }
+                        //   >
+                        //     <FaCheck />
+                        //   </Button>
+                        //   <Button
+                        //     variant="secondary"
+                        //     size="sm"
+                        //     style={{ padding: "2px 6px" }}
+                        //     onClick={() => setEditIdx(null)}
+                        //     disabled={
+                        //       loading || quotation.status === "cancelled"
+                        //     }
+                        //   >
+                        //     <FaTimes />
+                        //   </Button>
+                        // </>
                         <>
                           <Button
                             variant="success"
@@ -1661,7 +1849,7 @@ const QuotationDetails = () => {
                             variant="secondary"
                             size="sm"
                             style={{ padding: "2px 6px" }}
-                            onClick={() => setEditIdx(null)}
+                            onClick={() => handleCancelEdit(item.productId)}
                             disabled={
                               loading || quotation.status === "cancelled"
                             }
@@ -1675,7 +1863,7 @@ const QuotationDetails = () => {
                             variant="link"
                             size="sm"
                             style={{ color: "#157347", padding: 0 }}
-                            onClick={() => handleEdit(idx, item.units)}
+                            onClick={() => handleEdit(idx, item.units, item)}
                             disabled={
                               loading || quotation.status === "cancelled" || quotation.status === "send"
                             }
