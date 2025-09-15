@@ -1073,6 +1073,7 @@ const OrderDetails = () => {
     "Slot 1: 7:00 AM to 11:00 PM",
     "Slot 2: 11:00 PM to 11:45 PM",
     "Slot 3: 7:30 AM to 4:00 PM",
+    "Slot 4: 2:45 PM to 11:45 PM",
   ];
 
   return (
@@ -1239,8 +1240,8 @@ const OrderDetails = () => {
                     <th>Selected Qty</th>
                     <th>Days</th>
                     {/* you have t comment these 2 */}
-                    <th>Price/Qty</th>
-                    <th>Total</th>
+                    {/* <th>Price/Qty</th> */}
+                    {/* <th>Total</th> */}
                     {!pdfMode && <th>Action</th>}
                   </tr>
                 </thead>
@@ -1453,8 +1454,8 @@ const OrderDetails = () => {
                         </td>
                         <td>{prod.days}</td>
                         {/* you have t comment these 2 */}
-                        <td>₹{(prod.productPrice)}</td>
-                        <td>₹{prod.productTotal}</td>
+                        {/* <td>₹{(prod.productPrice)}</td> */}
+                        {/* <td>₹{prod.productTotal}</td> */}
                         {/* {(idx === 0) && console.log(`prod.total * days: ${prod.total * days} prod.productName: ${prod.productName}prod.total: ${prod.total}`)} */}
                         {!pdfMode && (
                           <td>
@@ -1577,7 +1578,7 @@ const OrderDetails = () => {
             )}
             {!pdfMode && (
               <div className="d-flex flex-wrap gap-2 mt-3">
-                <Button
+                {/* <Button
                   variant="primary"
                   size="sm"
                   style={{ fontSize: 13, fontWeight: 600 }}
@@ -1585,8 +1586,8 @@ const OrderDetails = () => {
                   disabled={order && order.orderStatus === "cancelled"}
                 >
                   Generate Invoice
-                </Button>
-                <Button
+                </Button> */}
+                {/* <Button
                   variant="info"
                   size="sm"
                   style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}
@@ -1594,7 +1595,7 @@ const OrderDetails = () => {
                   disabled={order && order.orderStatus === "cancelled"}
                 >
                   Refurbishment Invoice
-                </Button>
+                </Button> */}
                 <Button
                   variant="primary"
                   size="sm"

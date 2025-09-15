@@ -237,6 +237,7 @@ const Orders = () => {
                   <th style={{ width: "10%" }}>Grand Total</th>
                   <th style={{ width: "10%" }}>Event Date</th>
                   <th style={{ width: "25%" }}>Address</th>
+                  <th style={{ width: "25%" }}>Status</th>
                   <th style={{ width: "15%" }} className="text-center">
                     Action
                   </th>
@@ -254,6 +255,7 @@ const Orders = () => {
                       <td>{order.grandTotal}</td>
                       <td>{quoteDate}</td>
                       <td>{order.address}</td>
+                      <td>{order.orderStatus}</td>
                       <td className="text-center">
                         <Button
                           variant="outline-dark"

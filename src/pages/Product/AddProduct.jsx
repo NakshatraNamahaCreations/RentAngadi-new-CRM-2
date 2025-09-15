@@ -389,7 +389,7 @@ const AddProduct = () => {
             <Row className="mb-3">
               <Col md={4}>
                 <Form.Label style={{ fontSize: 14 }}>
-                  Available Stock 
+                  Available Stock
                   {/* <span className="text-danger">*</span> */}
                 </Form.Label>
                 <Form.Control

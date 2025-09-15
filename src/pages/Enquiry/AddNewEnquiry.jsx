@@ -21,6 +21,7 @@ const deliveryDismantleSlots = [
   "Slot 1: 7:00 AM to 11:00 PM",
   "Slot 2: 11:00 PM to 11:45 PM",
   "Slot 3: 7:30 AM to 4:00 PM",
+  "Slot 4: 2:45 PM to 11:45 PM",
 ];
 
 const ENQUIRY_PRODUCTS_KEY = "enquiry_selected_products";
@@ -107,15 +108,24 @@ const AddNewEnquiry = () => {
 
   // Reset executive if company changes and executive not in list
   useEffect(() => {
-    const client = clientData.find((c) => c.clientName === company);
+    // const client = clientData.find((c) => c.clientName === company);
+    // if (
+    //   client &&
+    //   client.executives &&
+    //   !client.executives.some((ex) => ex.name === executive)
+    // ) {
+    //   setExecutive("");
+    // }
+
+    const client = clientData.find((c) => c._id === companyId);
     if (
       client &&
       client.executives &&
-      !client.executives.some((ex) => ex.name === executive)
+      !client.executives.some((ex) => ex._id === executiveId)
     ) {
       setExecutive("");
     }
-  }, [company, clientData, executive]);
+  }, [companyId, clientData, executive]);
 
   const fetchClients = async () => {
     const token = sessionStorage.getItem("token");

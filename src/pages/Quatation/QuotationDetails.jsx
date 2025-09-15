@@ -83,6 +83,7 @@ const QuotationDetails = () => {
   const [editManPower, setEditManPower] = useState(false);
   const [editTransport, setEditTransport] = useState(false);
   const [refurbishment, setRefurbishment] = useState(0);
+  const originalQuotationRef = React.useRef(null);
 
   // const [grandTotal, setGrandTotal] = useState(0)
 
@@ -108,8 +109,10 @@ const QuotationDetails = () => {
       try {
         const res = await axios.get(`${ApiURL}/quotations/getquotation/${id}`);
         console.log("getquotation/ quoteData: ", res.data.quoteData);
+        console.log("getquotation/ quoteData products: ", res.data.quoteData.slots[0].Products);
         // console.log("quoteData slots", res.data.quoteData.slots)
         setQuotation(res.data.quoteData);
+        originalQuotationRef.current = JSON.parse(JSON.stringify(res.data.quoteData || {}));
       } catch (error) {
         setQuotation(null);
       }
@@ -171,7 +174,7 @@ const QuotationDetails = () => {
                 endDate,
                 quantity: prod.quantity || prod.qty,
                 total: prod.total,
-                productSlot: quotation?.quoteTime
+                productSlot: prod.productSlot
               };
             })
           )
@@ -261,7 +264,7 @@ const QuotationDetails = () => {
     }
   };
 
-  const handleUpdateQuotation = async () => {
+  const handleUpdateQuotation0 = async () => {
     try {
       // Flatten all products from all slots for the Products array
       const allProducts = quotation?.slots
@@ -462,6 +465,90 @@ const QuotationDetails = () => {
     }));
   };
 
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = () => {
+    if (!quotation || !originalQuotationRef.current) return false;
+    const original = originalQuotationRef.current;
+
+    // Check top-level changes
+    const topLevelKeys = ["discount", "transportcharge", "labourecharge", "refurbishment", "GST"];
+    for (const key of topLevelKeys) {
+      if (Number(quotation?.[key] || 0) !== Number(original?.[key] || 0)) {
+        return true;
+      }
+    }
+
+    // Check GrandTotal change
+    const nextGrandTotal = Number(quotation?.finalTotal || quotation?.GrandTotal || 0);
+    const prevGrandTotal = Number(original?.finalTotal || original?.GrandTotal || 0);
+    if (nextGrandTotal !== prevGrandTotal) {
+      return true;
+    }
+
+    // Check product changes in slots
+    for (let slotIdx = 0; slotIdx < (quotation?.slots || []).length; slotIdx++) {
+      const slot = quotation.slots[slotIdx];
+      const origSlot = (original?.slots || [])[slotIdx] || {};
+
+      for (const p of slot.Products || []) {
+        const origP = (origSlot.Products || []).find((op) => String(op.productId) === String(p.productId)) || {};
+        const nextQty = p.qty || p.quantity || 0;
+        const prevQty = origP.qty || origP.quantity || 0;
+        const nextTotal = p.total || 0;
+        const prevTotal = origP.total || 0;
+        const nextPQD = p.productQuoteDate || null;
+        const prevPQD = origP.productQuoteDate || null;
+        const nextPED = p.productEndDate || null;
+        const prevPED = origP.productEndDate || null;
+        const nextSlotVal = p.productSlot || null;
+        const prevSlotVal = origP.productSlot || null;
+
+        const hasChange =
+          Number(nextQty) !== Number(prevQty) ||
+          Number(nextTotal) !== Number(prevTotal) ||
+          String(nextPQD || "") !== String(prevPQD || "") ||
+          String(nextPED || "") !== String(prevPED || "") ||
+          String(nextSlotVal || "") !== String(prevSlotVal || "");
+
+        if (hasChange) return true;
+      }
+    }
+
+    return false;
+  };
+
+  const handleDownloadPDFClick = async () => {
+    if (hasUnsavedChanges()) {
+      const shouldSave = window.confirm(
+        "You have unsaved changes. Do you want to save the quotation before downloading PDF?"
+      );
+      if (shouldSave) {
+        await handleUpdateQuotation();
+      }
+    }
+    navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } });
+  };
+
+  // // Sync edited productDates into quotation.slots so UI and payload stay in sync
+  // useEffect(() => {
+  //   if (!quotation || !quotation.slots || Object.keys(productDates || {}).length === 0) return;
+  //   const nextSlots = quotation.slots.map((slot) => ({
+  //     ...slot,
+  //     Products: (slot.Products || []).map((p) => {
+  //       const pd = productDates[p.productId];
+  //       if (!pd) return p;
+  //       return {
+  //         ...p,
+  //         productQuoteDate: formatDateToDDMMYYYY(pd.productQuoteDate) || p.productQuoteDate || slot.quoteDate,
+  //         productEndDate: formatDateToDDMMYYYY(pd.productEndDate) || p.productEndDate || slot.endDate,
+  //         productSlot: pd.productSlot || p.productSlot || quotation.quoteTime || slot.quoteTime,
+  //       };
+  //     }),
+  //   }));
+  //   setQuotation((prev) => ({ ...prev, slots: nextSlots }));
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [productDates]);
+
   // // Helper: flatten slots/products for table
   // const items =
   //   quotation?.slots && Array.isArray(quotation.slots)
@@ -659,8 +746,12 @@ const QuotationDetails = () => {
             qty: editQty,
             quantity: editQty,
             total: editQty * (prod.price || item.pricePerUnit),
-            productQuoteDate: formatDateToDDMMYYYY(productDateDetails.productQuoteDate),
-            productEndDate: formatDateToDDMMYYYY(productDateDetails.productEndDate),
+            productQuoteDate: productDateDetails.productQuoteDate
+              ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
+              : prod.productQuoteDate,
+            productEndDate: productDateDetails.productEndDate
+              ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
+              : prod.productEndDate,
             productSlot: productDateDetails.productSlot,
           }
           : prod
@@ -674,8 +765,15 @@ const QuotationDetails = () => {
           ...currentItem,
           quantity: editQty, // Update the quantity
           total: editQty * currentItem.pricePerUnit, // Recalculate the total
-          productQuoteDate: formatDateToDDMMYYYY(productDateDetails.productQuoteDate),
-          productEndDate: formatDateToDDMMYYYY(productDateDetails.productEndDate),
+          productQuoteDate: productDateDetails.productQuoteDate
+            ? formatDateToDDMMYYYY(productDateDetails.productQuoteDate)
+            : currentItem.productQuoteDate,
+
+          productEndDate: productDateDetails.productEndDate
+            ? formatDateToDDMMYYYY(productDateDetails.productEndDate)
+            : currentItem.productEndDate,
+
+
           productSlot: productDateDetails.productSlot,
         };
       }
@@ -737,6 +835,114 @@ const QuotationDetails = () => {
       alert("Something went wrong while cancelling the quotation.");
     }
   };
+
+  // Update only changed fields (top-level charges and per-product values)
+  const handleUpdateQuotation = async () => {
+    try {
+      const original = originalQuotationRef.current || {};
+
+      const topLevelChanges = {};
+      ["discount", "transportcharge", "labourecharge", "refurbishment", "GST"].forEach((k) => {
+        if (Number(quotation?.[k] || 0) !== Number(original?.[k] || 0)) {
+          topLevelChanges[k] = Number(quotation?.[k] || 0);
+        }
+      });
+
+      // Also track grand total changes driven by UI recompute
+      const nextGrandTotal = Number(quotation?.finalTotal || quotation?.GrandTotal || 0);
+      const prevGrandTotal = Number(original?.finalTotal || original?.GrandTotal || 0);
+      if (nextGrandTotal !== prevGrandTotal) {
+        topLevelChanges.GrandTotal = nextGrandTotal;
+      }
+
+      const slotsChanges = (quotation?.slots || []).map((slot, slotIdx) => {
+        const origSlot = (original?.slots || [])[slotIdx] || {};
+        let slotHasChange = false;
+        const fullProductsPayload = (slot.Products || []).map((p) => {
+          const origP = (origSlot.Products || []).find((op) => String(op.productId) === String(p.productId)) || {};
+          const nextQty = p.qty || p.quantity || 0;
+          const prevQty = origP.qty || origP.quantity || 0;
+          const nextTotal = p.total || 0;
+          const prevTotal = origP.total || 0;
+          // Pull user-edited dates/slot from productDates, fallback to existing product or slot/quotation values
+          const pd = productDates[p.productId] || {};
+          const normalizedPQD = formatDateToDDMMYYYY(pd.productQuoteDate) || p.productQuoteDate || slot.quoteDate || quotation.quoteDate;
+          const normalizedPED = formatDateToDDMMYYYY(pd.productEndDate) || p.productEndDate || slot.endDate || quotation.endDate;
+          const normalizedSlot = pd.productSlot || p.productSlot || quotation.quoteTime || slot.quoteTime || null;
+
+          const nextPQD = normalizedPQD;
+          const prevPQD = origP.productQuoteDate || null;
+          const nextPED = normalizedPED;
+          const prevPED = origP.productEndDate || null;
+          const nextSlotVal = normalizedSlot;
+          const prevSlotVal = origP.productSlot || null;
+
+          const hasChange =
+            Number(nextQty) !== Number(prevQty) ||
+            Number(nextTotal) !== Number(prevTotal) ||
+            String(nextPQD || "") !== String(prevPQD || "") ||
+            String(nextPED || "") !== String(prevPED || "") ||
+            String(nextSlotVal || "") !== String(prevSlotVal || "");
+
+          if (hasChange) slotHasChange = true;
+
+          return {
+            productId: p.productId,
+            productName: p.productName,
+            qty: nextQty,
+            quantity: nextQty,
+            price: p.price,
+            total: nextTotal,
+            productQuoteDate: nextPQD,
+            productEndDate: nextPED,
+            productSlot: nextSlotVal,
+            StockAvailable: p.availableStock,
+          };
+        });
+
+        if (!slotHasChange) return null;
+        return {
+          slotName: slot.slotName,
+          quoteDate: slot.quoteDate,
+          endDate: slot.endDate,
+          Products: fullProductsPayload,
+        };
+      }).filter(Boolean);
+
+      if (Object.keys(topLevelChanges).length === 0 && slotsChanges.length === 0) {
+        toast.success("No changes to update");
+        return;
+      }
+
+      const payload = {
+        enquiryObjectId: quotation._id,
+        enquiryId: quotation.enquiryId,
+        status: quotation?.status,
+        ...topLevelChanges,
+        slots: slotsChanges,
+      };
+
+      console.clear();
+      console.log("Submitting minimal quotation changes:", { ...payload, Products: payload?.slots[0]?.Products });
+
+      // return;
+
+      const response = await axios.put(
+        `${ApiURL}/quotations/update-quotation/${quotation._id}`,
+        payload
+      );
+      if (response.status === 200) {
+        toast.success("Quotation updated successfully");
+        originalQuotationRef.current = JSON.parse(JSON.stringify(quotation || {}));
+      }
+    } catch (error) {
+      console.error("Error updating quotation:", error);
+      toast.error("Failed to update quotation");
+    }
+  };
+
+
+
 
   const handleDownloadPDF0 = () => {
     const doc = new jsPDF();
@@ -1032,6 +1238,7 @@ const QuotationDetails = () => {
     "Slot 1: 7:00 AM to 11:00 PM",
     "Slot 2: 11:00 PM to 11:45 PM",
     "Slot 3: 7:30 AM to 4:00 PM",
+    "Slot 4: 2:45 PM to 11:45 PM",
   ];
 
   if (loading) {
@@ -1078,8 +1285,26 @@ const QuotationDetails = () => {
           }}
           onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
           onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
+          onClick={handleUpdateQuotation}
+        >
+          Update quotation
+        </Button>
+        <Button
+          variant="primary"
+          className="ms-auto"
+          style={{
+            background: "linear-gradient(45deg, #3498db, #2980b9)",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            fontWeight: "500",
+            transition: "transform 0.2s",
+          }}
+          onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
+          onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
           // onClick={handleDownloadPDF}
-          onClick={() => navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } })}
+          // onClick={() => navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } })}
+          onClick={handleDownloadPDFClick}
         >
           Download as PDF
         </Button>
@@ -1203,10 +1428,17 @@ const QuotationDetails = () => {
                 //     ) + 1
                 //     : 1;
                 let days = 1;
+                console.log(`item fr date: `, item);
+                // const start = item.productQuoteDate instanceof Date ? item.productQuoteDate : parseDate(item.productQuoteDate);
+                // const end = item.productEndDate instanceof Date ? item.productEndDate : parseDate(item.productEndDate);
                 const start = item.quoteDate instanceof Date ? item.quoteDate : parseDate(item.quoteDate);
                 const end = item.endDate instanceof Date ? item.endDate : parseDate(item.endDate);
                 days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
                 if (isNaN(days) || days < 1) days = 1;
+
+                days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                if (isNaN(days) || days < 1) days = 1;
+
 
                 // const qty = item.quantity || 0;
                 const price = item.pricePerUnit || 0;
@@ -1239,13 +1471,14 @@ const QuotationDetails = () => {
                     </td>
                     <td style={{ verticalAlign: "middle", width: "25%" }}>
                       <div className="d-flex">
-
+                        {console.log(`item: `, idx, item, productDates[item.productId])}
                         {editIdx === idx ? (
                           <DatePicker
                             selected={
                               productDates[item.productId]?.productQuoteDate ||
-                              parseDate(quotation?.slots[0]?.quoteDate)
-                            } // Default to initial quoteDate
+                              // '12-12-2023'|| parseDate(item.quoteDate) ||
+                              parseDate(item.quoteDate)
+                            } // Default to product's own quote date
                             onChange={(date) =>
                               handleDateChange(
                                 item.productId,
@@ -1272,7 +1505,7 @@ const QuotationDetails = () => {
                               {/* Check if the product date exists, else fallback to quote date */}
                               {productDates[item.productId]?.productQuoteDate
                                 ? formatDateToDDMMYYYY(productDates[item.productId]?.productQuoteDate)
-                                : (quotation?.slots[0]?.quoteDate) || "No date available"}
+                                : (item.quoteDate) || "No date available"}
                               {"    "}
                               <span style={{ paddingLeft: "10px" }}>To</span>
                             </span>
@@ -1280,12 +1513,12 @@ const QuotationDetails = () => {
                         )}
 
                         <br />
-
+                        {console.log(`productDates `, productDates)}
                         {editIdx === idx ? (
                           <DatePicker
                             selected={
                               productDates[item.productId]?.productEndDate ||
-                              parseDate(quotation?.slots[0]?.endDate)
+                              parseDate(item.endDate)
                             } // Default to initial endDate
                             onChange={(date) =>
                               handleDateChange(
@@ -1314,7 +1547,7 @@ const QuotationDetails = () => {
                             >
                               {productDates[item.productId]?.productEndDate
                                 ? formatDateToDDMMYYYY(productDates[item.productId]?.productEndDate)
-                                : (quotation?.slots[0]?.endDate) || "No date available"}
+                                : (item.endDate) || "No date available"}
                             </span>
                           )
                         )}
@@ -1326,6 +1559,9 @@ const QuotationDetails = () => {
                         className="m-0 mt-1"
                         value={
                           productDates[item.productId]?.productSlot ||
+                          //  "Slot 3: 11:00 PM to 11:45 PM" 
+                          // || 
+                          item.productSlot ||
                           quotation?.quoteTime
                         }
                         onChange={(e) =>
@@ -1539,7 +1775,9 @@ const QuotationDetails = () => {
                       type="number"
                       value={quotation.discount}
                       onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
+                        const raw = parseFloat(e.target.value) || 0;
+                        const value = Math.min(100, Math.max(0, raw)); // clamp 0–100
+                        // const value = parseFloat(e.target.value) || 0;
                         setQuotation({ ...quotation, discount: value });
                         // Update total calculations
                         // quotation.refurbishment = value;
@@ -1670,7 +1908,8 @@ const QuotationDetails = () => {
             )}
           </div>
           <div className="d-flex justify-content-between mb-2">
-            <span>Refurbishment:</span>
+            {/* <span>Refurbishment:</span> */}
+            <span>Reupholestry:</span>
             {/* {!editMode ? (
               <>
                 <div className="d-flex align-items-center">

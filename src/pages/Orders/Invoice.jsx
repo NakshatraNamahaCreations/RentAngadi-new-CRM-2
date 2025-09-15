@@ -351,7 +351,7 @@ const Invoice = () => {
           </tr>
           <tr>
             <td>
-              <b>{"Refurbishment Charges"}</b>
+              <b>{"Reupholestry Charges"}</b>
             </td>
             <td>₹ {refurbishment.toFixed(2)}</td>
           </tr>

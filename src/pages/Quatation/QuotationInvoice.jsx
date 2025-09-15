@@ -170,7 +170,7 @@ const QuotationInvoice = () => {
               </td>
             </tr>
             <tr>
-              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Refurbishment</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Reupholestry</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
                 ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
