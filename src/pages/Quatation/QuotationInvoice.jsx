@@ -116,7 +116,7 @@ const QuotationInvoice = () => {
                 <td style={{ border: "1px solid #666", padding: 8 }}>{idx + 1}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.productName}</td>
                 {/* <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || quotation?.quoteTime}</td> */}
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot || quotation?.quoteTime}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>
                   {product.image && (
                     <img

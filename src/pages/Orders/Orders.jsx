@@ -255,7 +255,20 @@ const Orders = () => {
                       <td>{order.grandTotal}</td>
                       <td>{quoteDate}</td>
                       <td>{order.address}</td>
-                      <td>{order.orderStatus}</td>
+                      {/* <td>{order.orderStatus}</td> */}
+                      <td
+                        style={{
+                          color:
+                            order.orderStatus === "Confirm"
+                              ? "green"
+                              : order.orderStatus === "cancelled"
+                                ? "red"
+                                : "black",
+                          fontWeight: "600"
+                        }}
+                      >
+                        {order.orderStatus}
+                      </td>
                       <td className="text-center">
                         <Button
                           variant="outline-dark"

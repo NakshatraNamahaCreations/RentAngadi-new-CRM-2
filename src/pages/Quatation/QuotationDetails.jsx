@@ -1439,7 +1439,7 @@ const QuotationDetails = () => {
             background: "linear-gradient(45deg, #3498db, #2980b9)",
             border: "none",
             borderRadius: "8px",
-            padding: "10px 20px",
+            padding: "10px",
             fontWeight: "500",
             transition: "transform 0.2s",
           }}

@@ -1058,7 +1058,7 @@ const EnquiryDetails = () => {
                     type="number"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.labourecharge
+                        ? enquiry?.quotationData?.labourecharge
                         : manpower
                     }
                     onChange={(e) => setManpower(e.target.value)}
@@ -1073,7 +1073,7 @@ const EnquiryDetails = () => {
                     type="number"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.transportcharge
+                        ? enquiry?.quotationData?.transportcharge
                         : transport
                     }
                     onChange={(e) => setTransport(e.target.value)}
@@ -1088,7 +1088,7 @@ const EnquiryDetails = () => {
                     type="number"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.discount
+                        ? enquiry?.quotationData?.discount
                         : discount
                     }
                     placeholder="Discount in percentage"
@@ -1114,7 +1114,7 @@ const EnquiryDetails = () => {
                           String(opt.value) ===
                           String(
                             enquiry?.status === "sent"
-                              ? enquiry.quotationData.GST
+                              ? enquiry?.quotationData?.GST
                               : gst
                           )
                       ) || null
@@ -1137,10 +1137,11 @@ const EnquiryDetails = () => {
                     type="text"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.GrandTotal
+                        ? enquiry?.quotationData?.GrandTotal
                         : grandTotal
                     }
-                    readOnly
+                    isDisabled={enquiry?.status === "sent"}
+                  // readOnly
                   />
                 </Form.Group>
               </Col>
@@ -1152,7 +1153,7 @@ const EnquiryDetails = () => {
                     type="text"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.inchargeName
+                        ? enquiry?.quotationData?.inchargeName
                         : inchargeName
                     }
                     onChange={(e) => setInchargeName(e.target.value)}
@@ -1168,7 +1169,7 @@ const EnquiryDetails = () => {
                     type="number"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.inchargePhone
+                        ? enquiry?.quotationData?.inchargePhone
                         : inchargePhone
                     }
                     onChange={(e) => setInchargePhone(e.target.value)}
@@ -1185,7 +1186,7 @@ const EnquiryDetails = () => {
                     type="number"
                     value={
                       enquiry?.status === "sent"
-                        ? enquiry.quotationData.adjustments
+                        ? enquiry?.quotationData?.adjustments
                         : roundOff
                     }
                     onChange={(e) => setRoundOff(e.target.value)}

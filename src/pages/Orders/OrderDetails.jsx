@@ -1117,7 +1117,7 @@ const OrderDetails = () => {
                   <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                     <span style={labelStyle}>Order Status: </span>
                     <span
-                      style={{ ...valueStyle, color: "#1dbf73", fontWeight: 600 }}
+                      style={{ ...valueStyle, color: order.orderStatus === "Confirm" ? "#1dbf73" : "#E53935", fontWeight: 600 }}
                     >
                       {order.orderStatus}
                     </span>

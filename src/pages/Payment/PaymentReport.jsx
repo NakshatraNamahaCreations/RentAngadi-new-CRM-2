@@ -226,11 +226,11 @@ const PaymentReport = () => {
       <div className="d-flex justify-content-between mb-3">
         <Form.Control
           type="text"
-          placeholder="Search by Quotation ID, Amount, Mode, Status"
+          placeholder="Search by Company name, Quotation ID, Amount, Mode, Status"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="shadow-sm"
-          style={{ width: "300px", fontSize: "12px", marginBottom: "10px" }}
+          style={{ width: "400px", fontSize: "12px", marginBottom: "10px" }}
         />
         <div className="d-flex gap-2">
           <Button
