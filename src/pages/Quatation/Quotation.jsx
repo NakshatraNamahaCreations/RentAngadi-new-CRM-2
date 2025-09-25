@@ -192,7 +192,7 @@ const Quotation = () => {
                   />
                 </th>
                 <th className="text-start">Quote Id</th>
-                <th className="text-start">Quote Date</th>
+                <th className="text-start">Event Date</th>
                 <th className="text-start">Time</th>
                 <th className="text-start">Client Name</th>
                 <th className="text-start">GST</th>

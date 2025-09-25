@@ -41,11 +41,33 @@ const QuotationInvoice = () => {
   const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
   const finalTotal = Math.round(totalWithCharges + gstAmt);
 
+  const makeSafe = (val, fallback = "NA") => {
+    if (!val && val !== 0) return fallback;
+    return String(val)
+      .trim()
+      .replace(/[\/\\?%*:|"<>]/g, "")
+      .replace(/\s+/g, "_")
+      .slice(0, 120) || fallback;
+  };
+
+  // build filename from an array of parts and return with extension
+  const buildFilename = (parts = [], ext = "pdf") => {
+    const name = parts.map((p) => makeSafe(p)).join("-").replace(/_+/g, "_");
+    return `${name}.${ext}`;
+  };
+
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
+    const filename = buildFilename([
+      formatDateToMonthName(quotation.quoteDate),
+      formatDateToMonthName(quotation.endDate),
+      quotation?.executivename,
+      quotation?.clientName,
+      quotation?.address,
+    ]);
     const options = {
       margin: [0.05, 0.05, 0.05, 0.05],
-      filename: `${formatDateToMonthName(quotation.quoteDate)} ${formatDateToMonthName(quotation.endDate)} ${quotation.clientName}.pdf`,
+      filename,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" },

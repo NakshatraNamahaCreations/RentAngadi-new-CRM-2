@@ -162,9 +162,18 @@ const EnquiryDetails = () => {
 
   // const filteredProducts = enquiry?.products
 
-  // Confirmed total
+  // Confirmed total (includes days between enquiry.enquiryDate and enquiry.endDate)
+  const daysDiff = (() => {
+    const start = enquiry?.enquiryDate ? moment(enquiry.enquiryDate, "DD-MM-YYYY", true) : null;
+    const end = enquiry?.endDate ? moment(enquiry.endDate, "DD-MM-YYYY", true) : null;
+    if (start && end && start.isValid() && end.isValid()) {
+      return Math.max(1, end.diff(start, 'days') + 1);
+    }
+    return 1;
+  })();
+
   const totalAmount = enquiry?.products?.reduce(
-    (sum, p) => (confirmed[p.productId] ? sum + p.qty * p.price : sum),
+    (sum, p) => (confirmed[p.productId] ? sum + (p.qty * p.price * daysDiff) : sum),
     0
   );
 

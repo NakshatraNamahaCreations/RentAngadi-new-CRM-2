@@ -229,8 +229,7 @@ const QuotationDetails = () => {
       return
     }
 
-    // toast.success(`executed total: Rs. ${quotation.finalTotal}`)
-    // return
+    // await handleUpdateQuotation();    
 
     setPaymentLoading(true)
     try {
@@ -252,7 +251,6 @@ const QuotationDetails = () => {
       // // If the API call is successful, update the payment data state
       if (response.status === 200) {
         console.log("payment successful: ", response.data);
-        // await handleUpdateQuotation();
         await handleGenerateOrder()
         setGetPayment(response.data);
       }
@@ -339,6 +337,9 @@ const QuotationDetails = () => {
   };
 
   const handleGenerateOrder = async () => {
+    // toast.success('order generated')
+    // return
+
     setPaymentLoading(true)
 
 
@@ -735,8 +736,8 @@ const QuotationDetails = () => {
           {},
           {
             params: {
-              startDate: items[0].quoteDate,
-              endDate: items[0].endDate,
+              startDate: quotation?.quoteDate,
+              endDate: quotation?.endDate,
               productId,
             },
           }
@@ -998,87 +999,54 @@ const QuotationDetails = () => {
   // Update only changed fields (top-level charges and per-product values)
   const handleUpdateQuotation = async () => {
     try {
-      const original = originalQuotationRef.current || {};
-
-      const topLevelChanges = {};
-      ["discount", "transportcharge", "labourecharge", "refurbishment", "GST"].forEach((k) => {
-        if (Number(quotation?.[k] || 0) !== Number(original?.[k] || 0)) {
-          topLevelChanges[k] = Number(quotation?.[k] || 0);
-        }
-      });
-
-      // Also track grand total changes driven by UI recompute
-      const nextGrandTotal = Number(quotation?.finalTotal || quotation?.GrandTotal || 0);
-      const prevGrandTotal = Number(original?.finalTotal || original?.GrandTotal || 0);
-      if (nextGrandTotal !== prevGrandTotal) {
-        topLevelChanges.GrandTotal = nextGrandTotal;
+      // Reuse our single diff source of truth
+      const changed = hasUnsavedChanges();
+      if (!changed) {
+        toast.success("No changes to update");
+        return true; // allow navigation (e.g., invoice) to proceed
       }
 
-      const slotsChanges = (quotation?.slots || []).map((slot, slotIdx) => {
-        const origSlot = (original?.slots || [])[slotIdx] || {};
-        let slotHasChange = false;
-        const fullProductsPayload = (slot.Products || []).map((p) => {
-          const origP = (origSlot.Products || []).find((op) => String(op.productId) === String(p.productId)) || {};
-          const nextQty = p.qty || p.quantity || 0;
-          const prevQty = origP.qty || origP.quantity || 0;
-          const nextTotal = p.total || 0;
-          const prevTotal = origP.total || 0;
-          // Pull user-edited dates/slot from productDates, fallback to existing product or slot/quotation values
+      // Build a safe, explicit payload that reflects the current UI state,
+      // so deletions/additions/edits are persisted.
+      const slotsPayload = (quotation?.slots || []).map((slot) => ({
+        slotName: slot.slotName,
+        quoteDate: slot.quoteDate,
+        endDate: slot.endDate,
+        Products: (slot.Products || []).map((p) => {
           const pd = productDates[p.productId] || {};
-          const normalizedPQD = formatDateToDDMMYYYY(pd.productQuoteDate) || p.productQuoteDate || slot.quoteDate || quotation.quoteDate;
-          const normalizedPED = formatDateToDDMMYYYY(pd.productEndDate) || p.productEndDate || slot.endDate || quotation.endDate;
-          const normalizedSlot = pd.productSlot || p.productSlot || quotation.quoteTime || slot.quoteTime || null;
-
-          const nextPQD = normalizedPQD;
-          const prevPQD = origP.productQuoteDate || null;
-          const nextPED = normalizedPED;
-          const prevPED = origP.productEndDate || null;
-          const nextSlotVal = normalizedSlot;
-          const prevSlotVal = origP.productSlot || null;
-
-          const hasChange =
-            Number(nextQty) !== Number(prevQty) ||
-            Number(nextTotal) !== Number(prevTotal) ||
-            String(nextPQD || "") !== String(prevPQD || "") ||
-            String(nextPED || "") !== String(prevPED || "") ||
-            String(nextSlotVal || "") !== String(prevSlotVal || "");
-
-          if (hasChange) slotHasChange = true;
-
+          const productQuoteDate =
+            formatDateToDDMMYYYY(pd.productQuoteDate) || p.productQuoteDate || slot.quoteDate || quotation.quoteDate;
+          const productEndDate =
+            formatDateToDDMMYYYY(pd.productEndDate) || p.productEndDate || slot.endDate || quotation.endDate;
+          const productSlot = pd.productSlot || p.productSlot || quotation.quoteTime || slot.quoteTime || null;
+          const qty = p.qty || p.quantity || 0;
+          const total = p.total || qty * (p.price || 0);
           return {
             productId: p.productId,
             productName: p.productName,
-            qty: nextQty,
-            quantity: nextQty,
+            qty,
+            quantity: qty,
             price: p.price,
-            total: nextTotal,
-            productQuoteDate: nextPQD,
-            productEndDate: nextPED,
-            productSlot: nextSlotVal,
+            total,
+            productQuoteDate,
+            productEndDate,
+            productSlot,
             StockAvailable: p.availableStock,
           };
-        });
-
-        if (!slotHasChange) return null;
-        return {
-          slotName: slot.slotName,
-          quoteDate: slot.quoteDate,
-          endDate: slot.endDate,
-          Products: fullProductsPayload,
-        };
-      }).filter(Boolean);
-
-      if (Object.keys(topLevelChanges).length === 0 && slotsChanges.length === 0) {
-        toast.success("No changes to update");
-        return;
-      }
+        }),
+      }));
 
       const payload = {
         enquiryObjectId: quotation._id,
         enquiryId: quotation.enquiryId,
         status: quotation?.status,
-        ...topLevelChanges,
-        slots: slotsChanges,
+        discount: Number(quotation?.discount || 0),
+        transportcharge: Number(quotation?.transportcharge || 0),
+        labourecharge: Number(quotation?.labourecharge || 0),
+        refurbishment: Number(quotation?.refurbishment || 0),
+        GST: Number(quotation?.GST || 0),
+        GrandTotal: Number(quotation?.finalTotal || quotation?.GrandTotal || 0),
+        slots: slotsPayload,
       };
 
       console.clear();
@@ -2147,7 +2115,7 @@ const QuotationDetails = () => {
                 <div className="d-flex align-items-center">
                   <Button variant="link" size="sm"
                     disabled={quotation.status === "cancelled" || quotation.status === "send"}
-                    onClick={() => setEditMode(true)}>
+                    onClick={() => { setEditMode(true); setRefurbishment(quotation.refurbishment || 0); }}>
                     <FaEdit />
                   </Button>
                   <span className="">
