@@ -1,45 +1,45 @@
 import React, { useRef } from "react";
+import moment from "moment";
 import { useLocation, useNavigate } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { ImageApiURL } from "../../api";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 
-const QuotationInvoice = () => {
+const OrderSheet = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const invoiceRef = useRef();
 
-  const quotation = location.state?.quotation;
-  // quotation.discount = 0
+  const order = location.state?.order;
   const items = location.state?.items || [];
   const productDates = location.state?.productDates || {};
 
-  console.log(`quotation from state: `, quotation);
+  console.log(`order from state: `, order);
 
-  if (!quotation) {
+  if (!order) {
     return (
       <div className="container my-5">
-        <h3>No Quotation Data Provided</h3>
-        <button className="btn btn-primary" onClick={() => navigate(-1)}>
+        <h3>No Order Data Provided</h3>
+        <button className="btn btn-primary" onClick={() => navigate('/orders')}>
           Go Back
         </button>
       </div>
     );
   }
 
-  // Calculate products total
-  const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
-  const transport = Number(quotation.transportcharge || 0);
-  const manpower = Number(quotation.labourecharge || 0);
-  const discountPercent = Number(quotation.discount || 0);
-  const gstPercent = Number(quotation.GST || 0);
+  // // Calculate products total
+  // const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  // const transport = Number(order.transportcharge || 0);
+  // const manpower = Number(order.labourecharge || 0);
+  // const discountPercent = Number(order.discount || 0);
+  // const gstPercent = Number(order.GST || 0);
 
-  // Calculate totals in the new order
-  const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
-  const afterDiscount = productsTotal - discountAmt;
-  const totalWithCharges = afterDiscount + transport + manpower;
-  const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
-  const finalTotal = Math.round(totalWithCharges + gstAmt);
+  // // Calculate totals in the new order
+  // const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+  // const afterDiscount = productsTotal - discountAmt;
+  // const totalWithCharges = afterDiscount + transport + manpower;
+  // const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
+  // const finalTotal = Math.round(totalWithCharges + gstAmt);
 
   const makeSafe = (val, fallback = "NA") => {
     if (!val && val !== 0) return fallback;
@@ -59,11 +59,11 @@ const QuotationInvoice = () => {
   const handleDownloadPDF = () => {
     const element = invoiceRef.current;
     const filename = buildFilename([
-      formatDateToMonthName(quotation.quoteDate),
-      formatDateToMonthName(quotation.endDate),
-      quotation?.executivename,
-      quotation?.address,
-      quotation?.clientName,
+      formatDateToMonthName(order.slots[0]?.quoteDate),
+      formatDateToMonthName(order.slots[0]?.endDate),
+      order?.executivename,
+      order?.Address,
+      order?.clientName,
     ]);
     const options = {
       margin: [0.05, 0.05, 0.05, 0.05],
@@ -82,39 +82,50 @@ const QuotationInvoice = () => {
     return `${day} ${months[month - 1].slice(0, 3)} `;
   };
 
+  const startStr = order?.slots?.[0]?.quoteDate || order?.quoteDate;
+  const endStr = order?.slots?.[0]?.endDate || order?.endDate;
+  const startMoment = startStr ? moment(startStr, "DD-MM-YYYY", true) : null;
+  const endMoment = endStr ? moment(endStr, "DD-MM-YYYY", true) : null;
+  const numDays = startMoment && endMoment && startMoment.isValid() && endMoment.isValid()
+    ? Math.max(1, endMoment.diff(startMoment, "days") + 1)
+    : 1;
+
   return (
     <div className="container my-5">
       <Button
         onClick={handleDownloadPDF}
         variant="success"
-        className="my-1 d-flex ms-auto" // ms-auto will push the button to the right
+        className="my-1 d-flex ms-auto"
       >
-        Download Quotation
+        Download Order Sheet
       </Button>
       <div className="no-print" ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 0, fontFamily: "Arial, sans-serif" }}>
-        <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Quotation</h2>
+        <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Order Sheet</h2>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
           <tbody>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.executivename}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.clientName}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Executive Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.executivename}</td>
             </tr>
             <tr>
-              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.occasion}</td> */}
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteTime}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.address}</td>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.occasion}</td> */}
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.quoteTime}</td> */}
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td><td colSpan="3" style={{ border: '1px solid #ccc', padding: '6px' }}>{order.Address}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteDate}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.endDate}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order?.slots[0]?.quoteDate}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order?.slots[0]?.endDate}</td>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>No of days</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{numDays}</td> */}
             </tr>
+            {/* <tr>
+            </tr> */}
+            {/* <tr>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.inchargeName || "N/A"}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargePhone</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.inchargePhone || "N/A"}</td>
+            </tr> */}
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargeName || "N/A"}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Rent Angadi Point of Contact</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargePhone || "N/A"}</td>
-            </tr>
-            <tr>
-              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.additionalLogisticsSupport}</td> */}
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.additionalLogisticsSupport}</td> */}
             </tr>
           </tbody>
         </table>
@@ -126,10 +137,10 @@ const QuotationInvoice = () => {
               <th style={{ border: "1px solid #666", padding: 8 }}>Product Name</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>Slot</th>
               <th style={{ border: "1px solid #666", padding: 8, width: '80px' }}>Image</th>
-              <th style={{ border: "1px solid #666", padding: 8 }}>Price per Unit</th>
+              {/* <th style={{ border: "1px solid #666", padding: 8 }}>Price per Unit</th> */}
               <th style={{ border: "1px solid #666", padding: 8 }}>No of units</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>No of days</th>
-              <th style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>Amount</th>
+              {/* <th style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>Amount</th> */}
             </tr>
           </thead>
           <tbody>
@@ -137,8 +148,8 @@ const QuotationInvoice = () => {
               <tr key={idx}>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{idx + 1}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.productName}</td>
-                {/* <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || quotation?.quoteTime}</td> */}
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot || quotation?.quoteTime}</td>
+                {/* <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || order?.quoteTime}</td> */}
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot || order?.quoteTime}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>
                   {product.image && (
                     <img
@@ -148,72 +159,71 @@ const QuotationInvoice = () => {
                     />
                   )}
                 </td>
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.pricePerUnit}</td>
+                {/* <td style={{ border: "1px solid #666", padding: 8 }}>{product.pricePerUnit}</td> */}
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.quantity}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.days}</td>
-                <td style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>{product.amount * product.days}</td>
+                {/* <td style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>{product.amount * product.days}</td> */}
               </tr>
             ))}
           </tbody>
         </table>
 
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
+        {/* <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
           <tbody>
             <tr>
-              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>{quotation?.discount != 0 ? "Total Amount before discount" : "Total amount"}</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>{order?.discount != 0 ? "Total Amount before discount" : "Total amount"}</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                {console.log(`quotation?.allProductsTotal: `, quotation?.allProductsTotal)}
-                ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{order?.discount != 0 ? (order?.allProductsTotal || productsTotal)?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
-            {quotation?.discount != 0 && (
+            {order?.discount != 0 && (
               <tr>
-                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Discount ({quotation?.discount}%)</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Discount ({order?.discount}%)</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  -₹{quotation?.discountAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  -₹{(order?.discountAmt || (order?.discount / 100) * productsTotal)?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
               </tr>
             )}
-            {quotation?.discount != 0 && (<tr>
+            {order?.discount != 0 && (<tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Total Amount After Discount</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.discount != 0 ? quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{(order?.afterDiscount || (productsTotal - ((order?.discount || 0) / 100) * productsTotal))?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>)}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Transportation</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.transportcharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{order?.transportcharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Manpower Charge</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.labourecharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{order?.labourecharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Reupholestry</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{(order.refurbishmentAmount || order.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
-            {quotation?.GST != 0 && quotation?.GST > 0 && (
+            {order?.GST != 0 && order?.GST > 0 && (
               <tr>
-                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({quotation?.GST}%)</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({order?.GST}%)</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  ₹{quotation?.gstAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  ₹{(order?.gstAmt || ((order?.GST || 0) / 100) * (productsTotal - ((order?.discount || 0) / 100) * productsTotal + (order?.transportcharge || 0) + (order?.labourecharge || 0) + (order?.refurbishmentAmount || order?.refurbishment || 0)))?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
               </tr>
             )}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold", backgroundColor: "#f8f9fa" }}>Grand Total</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right", backgroundColor: "#f8f9fa" }}>
-                ₹{quotation?.finalTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{(order?.finalTotal || Math.round((productsTotal - ((order?.discount || 0) / 100) * productsTotal + (order?.transportcharge || 0) + (order?.labourecharge || 0) + (order?.refurbishmentAmount || order?.refurbishment || 0)) * (1 + (order?.GST || 0)/100)))?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
           </tbody>
-        </table>
+        </table> */}
 
         <div style={{ fontSize: "11px", marginTop: 30 }}>
           <strong>Note:</strong>
@@ -234,4 +244,4 @@ const QuotationInvoice = () => {
   );
 };
 
-export default QuotationInvoice;
+export default OrderSheet;

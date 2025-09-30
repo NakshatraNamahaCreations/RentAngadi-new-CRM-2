@@ -256,6 +256,8 @@ const Header = () => {
       setCurrentTab("Orders");
     } else if (matchPath("/orders-details/:id", path)) {
       setCurrentTab("Orders Details");
+    } else if (matchPath("/order-sheet/:id", path)) {
+      setCurrentTab("Order Sheet");
     } else if (matchPath("/invoice/:id", path)) {
       setCurrentTab("Invoice");
     } else if (matchPath("/enquiry-list", path)) {

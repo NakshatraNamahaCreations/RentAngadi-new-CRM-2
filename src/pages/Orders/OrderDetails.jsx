@@ -913,27 +913,29 @@ const OrderDetails = () => {
   };
 
   const handleDownloadPDF = async () => {
-    setPdfMode(true); // activate clean PDF mode
-
-    setTimeout(async () => {
-      const input = pdfRef.current;
-      // const canvas = await html2canvas(input, { scale: 2 });
-      const canvas = await html2canvas(pdfRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`order-${order.invoiceId || "details"}.pdf`);
-
-      setPdfMode(false); // deactivate after export
-    }, 300); // wait to let UI re-render without unnecessary columns
+    // Navigate to dedicated Order Sheet view with prepared data
+    if (!order) return;
+    const derivedItems = (order?.slots?.[0]?.products || []).map((p) => {
+      // derive days from per-product dates
+      let days = 1;
+      const start = parseDate(p.productQuoteDate);
+      const end = parseDate(p.productEndDate);
+      if (start && end) {
+        const diff = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        days = isNaN(diff) || diff < 1 ? 1 : diff;
+      }
+      return {
+        productId: p.productId,
+        productName: p.productName,
+        productSlot: p.productSlot || order?.slots?.[0]?.quoteTime,
+        image: p.ProductIcon,
+        // pricePerUnit: Number((p.total || 0) / (p.quantity || 1)) || 0,
+        quantity: p.quantity,
+        days,
+        // amount: Number((p.total || 0) / (p.quantity || 1)) || 0,    
+      };
+    });
+    navigate(`/order-sheet/${order._id}`, { state: { order, items: derivedItems, productDates } });
   };
 
   const handlePaymentInputChange = async (e) => {
@@ -2057,6 +2059,7 @@ const OrderDetails = () => {
                     <option value="Phonepay">Phonepay</option>
                     <option value="Paytm">Paytm</option>
                     <option value="UPI">UPI</option>
+                    <option value="Account">Account</option>
                   </Form.Select>
                 </Form.Group>
               )}

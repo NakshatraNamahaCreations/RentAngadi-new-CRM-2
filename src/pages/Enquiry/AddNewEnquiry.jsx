@@ -24,20 +24,6 @@ const deliveryDismantleSlots = [
   "Slot 4: 2:45 PM to 11:45 PM",
 ];
 
-const ENQUIRY_PRODUCTS_KEY = "enquiry_selected_products";
-
-function getStoredProducts() {
-  try {
-    const data = localStorage.getItem(ENQUIRY_PRODUCTS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStoredProducts(products) {
-  localStorage.setItem(ENQUIRY_PRODUCTS_KEY, JSON.stringify(products));
-}
 
 const AddNewEnquiry = () => {
   const navigate = useNavigate();
@@ -100,11 +86,6 @@ const AddNewEnquiry = () => {
     fetchClients();
     fetchProducts();
   }, []);
-
-  // Persist selected products
-  useEffect(() => {
-    setStoredProducts(selectedProducts);
-  }, [selectedProducts]);
 
   // Reset executive if company changes and executive not in list
   useEffect(() => {
@@ -283,6 +264,16 @@ const AddNewEnquiry = () => {
 
     // const executivePhoneNumber = chosenExecutive?.phoneNumber;
 
+    // Validate product quantities: must be >= 1 and not empty
+    const hasInvalidQty = selectedProducts.some((p) => {
+      const q = parseInt(p.qty, 10);
+      return !p.qty || Number.isNaN(q) || q < 1;
+    });
+    if (hasInvalidQty) {
+      toast.error("Each product must have quantity of at least 1");
+      return;
+    }
+
     // Prepare products array for API
     const Products = selectedProducts.map((p) => ({
       productId: p._id || p.id,
@@ -349,7 +340,6 @@ const AddNewEnquiry = () => {
         setSelectedSlot("");
         setSubCategory("");
         setSelectedProducts([]);
-        setStoredProducts([]);
         setProductSearch("");
         setDiscount(0);
         setGST(0);

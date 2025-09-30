@@ -2394,6 +2394,7 @@ const QuotationDetails = () => {
                   <option value="Phonepay">Phonepay</option>
                   <option value="Paytm">Paytm</option>
                   <option value="UPI">UPI</option>
+                  <option value="Account">Account</option>
                 </Form.Select>
               </Form.Group>
             )}

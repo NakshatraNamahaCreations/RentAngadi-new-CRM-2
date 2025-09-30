@@ -35,6 +35,7 @@ import QuotationInvoice from "./pages/Quatation/QuotationInvoice.jsx";
 import ClientReports from "./pages/reports/ClientReports.jsx";
 import Reports from "./pages/reports/Reports";
 import DamagedProductList from "./pages/Product/DamagedProductList.jsx";
+import OrderSheet from "./pages/Orders/OrderSheet.jsx";
 // import AdminRights from "./pages/Admin/AdminRights.jsx";
 // import AdminDetails from "./pages/Admin/AdminDetails.jsx";
 // import ExecutiveManagement from "./pages/Admin/ExecutiveManagement.jsx";
@@ -97,6 +98,7 @@ function App() {
             <Route path="/add-client" element={<AddClient />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders-details/:id" element={<OrderDetails />} />
+            <Route path="/order-sheet/:id" element={<OrderSheet />} />
             <Route path="/invoice/:id" element={<Invoice />} />
             <Route path="/enquiry-list" element={<EnquiryList />} />
             <Route path="/enquiry-calender" element={<EnquiryCalender />} />
