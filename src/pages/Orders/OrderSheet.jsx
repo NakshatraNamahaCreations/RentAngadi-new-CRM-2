@@ -106,11 +106,11 @@ const OrderSheet = () => {
           <tbody>
             <tr>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.clientName}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Executive Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.executivename}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.executivename}</td>
             </tr>
             <tr>
               {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.occasion}</td> */}
-              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.quoteTime}</td> */}
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order?.slots[0]?.slotName}</td>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td><td colSpan="3" style={{ border: '1px solid #ccc', padding: '6px' }}>{order.Address}</td>
             </tr>
             <tr>
@@ -120,10 +120,10 @@ const OrderSheet = () => {
             </tr>
             {/* <tr>
             </tr> */}
-            {/* <tr>
+            <tr>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.inchargeName || "N/A"}</td>
               <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargePhone</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.inchargePhone || "N/A"}</td>
-            </tr> */}
+            </tr>
             <tr>
               {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{order.additionalLogisticsSupport}</td> */}
             </tr>

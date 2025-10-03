@@ -376,7 +376,7 @@ const QuotationDetails = () => {
           })) || [], // Default to empty array if no slots found
         slots:
           quotation?.slots?.map((slot) => ({
-            slotName: slot.slotName,
+            slotName: quotation?.quoteTime,
             quoteDate: slot.quoteDate,
             endDate: slot.endDate,
             // products: slot.Products?.map((product) => ({
@@ -430,6 +430,9 @@ const QuotationDetails = () => {
       console.log("orderdetails config enough: ", orderDetails.slots[0].products);
       console.log("product: ", productDates)
       console.log("items: ", items)
+
+      // console.log(`orderDetails: `, orderDetails.slots[0]);
+      // return
 
       // Make the API call to create the order
       const response = await axios.post(
@@ -2166,6 +2169,10 @@ const QuotationDetails = () => {
               ₹{(quotation.adjustments || quotation.roundOff || 0).toFixed(2)}
             </span>
           </div> */}
+          {<div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
+            <span>Sub-total:</span>
+            <span>₹{(quotation?.totalWithCharges || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>}
           {quotation?.GST != 0 && <div className="d-flex justify-content-between mb-2">
             <span>GST ({(quotation?.GST || 0).toFixed(2)}%):</span>
             <span>₹{(quotation?.gstAmt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>

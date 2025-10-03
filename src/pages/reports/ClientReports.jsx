@@ -6,6 +6,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
 import { ApiURL } from '../../api';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const ClientReports = () => {
 	const [clients, setClients] = useState([]);
@@ -68,12 +70,14 @@ const ClientReports = () => {
 
 		responseData.orders.forEach(order => {
 			const clientId = order.clientId;
+
 			if (!clientData[clientId]) {
 				clientData[clientId] = {
 					_id: clientId,
 					allProductsTotal: 0,
 					totalDiscount: 0,
 					totalRoundOff: 0,
+					totalPayments: 0,
 					invoices: []
 				};
 			}
@@ -81,11 +85,14 @@ const ClientReports = () => {
 			clientData[clientId].allProductsTotal += order.allProductsTotal;
 			clientData[clientId].totalDiscount += order.discountAmount;
 			clientData[clientId].totalRoundOff += order.roundOff;
+			clientData[clientId].totalPayments += order.totalPaid || 0;
+
 			clientData[clientId].invoices.push({
 				_id: order.orderId,
 				invoiceDate: order.orderDate,
 				invoiceNumber: order.orderId,
-				amount: order.allProductsTotal
+				amount: order.allProductsTotal,
+				payments: order.totalPaid || 0
 			});
 		});
 
@@ -162,7 +169,7 @@ const ClientReports = () => {
 			}
 
 			const token = sessionStorage.getItem("token");
-			console.log('selectedYear: ', selectedYear, "selected month: ", selectedMonth);
+			console.log('selectedClients: ', selectedClients, 'selectedYear: ', selectedYear, "selected month: ", selectedMonth);
 
 			const response = await axios.post(`${ApiURL}/report/clientReportByMonth`, {
 				year: selectedYear,
@@ -176,6 +183,7 @@ const ClientReports = () => {
 			console.log('selectedYear: ', selectedYear, "selected month: ", selectedMonth, 'Report Data:', response.data);
 
 			console.log(`response.data: `, response.data);
+			console.log(`response.data.totalPayments: `, response.data.totalPayments);
 			// Transform the response data into client-wise format
 			const transformedData = transformResponse(response.data);
 			setReportData(transformedData);
@@ -205,6 +213,37 @@ const ClientReports = () => {
 		const year = new Date().getFullYear() - i;
 		return { value: year.toString(), label: year.toString() };
 	});
+
+	// ✅ Export to Excel function
+	const exportToExcel = () => {
+		if (!reportData || reportData.length === 0) {
+			alert("No data available to export");
+			return;
+		}
+
+		// Prepare data for Excel
+		const worksheetData = reportData.map(client => ({
+			"Client Name": clientMap[client._id] || "Unknown Client",
+			"Products Total": client.allProductsTotal,
+			"Discount Total": client.totalDiscount,
+			"RoundOff Total": client.totalRoundOff,
+			"Net Total": client.allProductsTotal - client.totalDiscount - client.totalRoundOff,
+			"Payments": client.totalPayments,
+		}));
+
+		// Create a worksheet
+		const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+		// Create a workbook and add worksheet
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Client Reports");
+
+		// Save the file
+		const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+		const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+		saveAs(data, `ClientReports_${selectedYear}_${selectedMonth}.xlsx`);
+	};
+
 
 	return (
 		<div style={{ padding: '24px' }}>
@@ -291,6 +330,23 @@ const ClientReports = () => {
 							{loading ? 'Loading...' : 'Generate Report'}
 						</Button>
 					</Col>
+					{/* ✅ New Download Button */}
+					<Col sm={2} className="d-flex align-items-end">
+						<Button
+							variant="success"
+							onClick={exportToExcel}
+							disabled={loading || !reportData || reportData.length === 0}
+							style={{
+								width: '100%',
+								backgroundColor: "#228B22",
+								border: "#228B22",
+								padding: '8px 16px',
+								fontSize: '14px'
+							}}
+						>
+							Download Excel
+						</Button>
+					</Col>
 				</Row>
 				<Table striped bordered hover>
 					<thead>
@@ -305,7 +361,12 @@ const ClientReports = () => {
 							<th onClick={() => handleSort('totalRoundOff')} style={{ width: '15%' }}>
 								RoundOff Total {getSortIcon('totalRoundOff')}
 							</th>
-							<th>Difference {getSortIcon('diff')}</th>
+							<th style={{ width: '15%' }}>
+								Total
+							</th>
+							<th style={{ width: '15%' }}>
+								Payments
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -329,31 +390,36 @@ const ClientReports = () => {
 										<td style={{ width: '15%' }}>
 											₹{(clientData.allProductsTotal - clientData.totalDiscount - clientData.totalRoundOff).toLocaleString()}
 										</td>
+										<td style={{ width: '15%' }}>
+											₹{clientData.totalPayments}
+										</td>
 									</tr>
-									{expandedRows.has(index) && (
+									{/* {expandedRows.has(index) && (
 										<tr>
 											<td colSpan={4} style={{ padding: '10px' }}>
 												<Table bordered>
 													<thead>
 														<tr>
-															<th>Invoice Date</th>
-															<th>Invoice Number</th>
+															<th>Event Date</th>
+															<th>Order Id</th>
 															<th>Amount</th>
+															<th>Payments</th>
 														</tr>
 													</thead>
 													<tbody>
 														{clientData.invoices?.map((invoice) => (
-															<tr key={invoice._id}>
+															<tr key={invoice._id}>																
 																<td>{moment(invoice.invoiceDate).format('DD/MM/YYYY')}</td>
 																<td>{invoice.invoiceNumber}</td>
 																<td>₹{invoice.amount.toLocaleString()}</td>
+																<td>₹{invoice.payments.toLocaleString()}</td>
 															</tr>
 														))}
 													</tbody>
 												</Table>
 											</td>
 										</tr>
-									)}
+									)} */}
 								</React.Fragment>
 							))
 						) : (

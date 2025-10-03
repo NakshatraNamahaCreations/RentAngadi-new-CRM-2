@@ -248,7 +248,34 @@ const AddNewEnquiry = () => {
       return;
     }
 
-    if (deliveryDate > dismantleDate) {
+    console.log(`deliveryDate: `, deliveryDate);
+    console.log(`dismantleDat: `, dismantleDate);
+
+    const deliveryDateOnly = new Date(deliveryDate);
+    const dismantleDateOnly = new Date(dismantleDate);
+
+    deliveryDateOnly.setHours(0, 0, 0, 0);
+    dismantleDateOnly.setHours(0, 0, 0, 0);
+
+    console.log(`deliveryDateOnly: `, deliveryDateOnly);
+    console.log(`dismantleDateOnly: `, dismantleDateOnly);
+
+    console.log("deliveryDateOnly > dismantleDateOnly:", deliveryDateOnly > dismantleDateOnly);
+    console.log("deliveryDateOnly < dismantleDateOnly:", deliveryDateOnly < dismantleDateOnly);
+    // this wont work
+    console.log("deliveryDateOnly === dismantleDateOnly:", deliveryDateOnly === dismantleDateOnly);
+
+    // Add this to check if dates are the same
+    if (deliveryDateOnly.getTime() === dismantleDateOnly.getTime()) {
+      console.log(`dates r same `,);
+      // alert("Delivery date and Dismantle date cannot be the same");
+      // return;
+    }
+
+    // return
+
+    if (deliveryDateOnly > dismantleDateOnly) {
+      console.log(`deliveryDate < dismantleDate: `, deliveryDate, dismantleDate);
       alert("Delivery date cannot be after Dismantle date");
       return;
     }
