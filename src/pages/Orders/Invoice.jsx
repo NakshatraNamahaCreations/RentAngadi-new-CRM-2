@@ -357,6 +357,12 @@ const Invoice = () => {
           </tr>
           <tr>
             <td>
+              <b>{"Sub-total"}</b>
+            </td>
+            <td>₹ {totalAfterCharges.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>
               <b>GST @ {gst}%</b>
             </td>
             <td>₹ {gstAmt.toFixed(2)}</td>

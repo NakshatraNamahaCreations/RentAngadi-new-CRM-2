@@ -78,7 +78,7 @@ const DamagedProductList = () => {
       }
     } catch (error) {
       console.error('Error adding damaged product:', error);
-      toast.error('Failed to add damaged/lost product');
+      toast.error(error?.response?.data?.error || 'Failed to add damaged/lost product');
     }
   };
 
@@ -165,7 +165,7 @@ const DamagedProductList = () => {
                   </Col>
                   <Col xs={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Product Stock</Form.Label>
+                      <Form.Label>Total Qty</Form.Label>
                       <Form.Control
                         type="text"
                         value={selectedAddProduct.qty}

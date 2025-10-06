@@ -1,34 +1,142 @@
-import React, { useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
-import { ImageApiURL } from "../../api";
+import { ApiURL, ImageApiURL } from "../../api";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import axios from 'axios';
+import QuotationDetails, { parseDate } from "./QuotationDetails";
 
 const QuotationInvoice = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const invoiceRef = useRef();
+  const { id } = useParams(); // ✅ get quotation ID from URL  
 
-  const quotation = location.state?.quotation;
+  const [quotation, setQuotation] = useState({});
+  const [items, setItems] = useState({});
+  const [loading, setLoading] = useState(true);
+
+
+
+  // const quotation = location.state?.quotation;
   // quotation.discount = 0
-  const items = location.state?.items || [];
+  // const items = location.state?.items || [];
+  // const items = quotation?.slots[0]?.Products
   const productDates = location.state?.productDates || {};
 
-  console.log(`quotation from state: `, quotation);
+  // console.clear();
+  // console.log(`quotation from state: `, quotation);
+  // console.log(`items from state: `, items);
 
-  if (!quotation) {
+  // if (!quotation) {
+  //   return (
+  //     <div className="container my-5">
+  //       <h3>No Quotation Data Provided</h3>
+  //       <button className="btn btn-primary" onClick={() => navigate(-1)}>
+  //         Go Back
+  //       </button>
+  //     </div>
+  //   );
+  // }
+
+  useEffect(() => {
+    const fetchQuotation = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${ApiURL}/quotations/getquotation/${id}`);
+        console.clear()
+        console.log(`Fetched quote: `, res.data.quoteData);
+        const quoteData = res.data.quoteData;
+
+        // Calculate days and total for each product
+        const enrichedItems = (quoteData.slots?.[0]?.Products || []).map(prod => {
+          const start = parseDate(prod.productQuoteDate || quoteData.quoteDate);
+          const end = parseDate(prod.productEndDate || quoteData.endDate);
+
+          let days = 1;
+          if (start && end) {
+            const diff = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            days = isNaN(diff) || diff < 1 ? 1 : diff;
+          }
+
+          const price = Number(prod.price) || 0;
+          const qty = Number(prod.quantity) || 0;
+          const total = price * qty * days;
+
+          return {
+            ...prod,
+            days,
+            pricePerUnit: price,
+            amount: total,
+          };
+        });
+
+        quoteData.slots[0].Products = enrichedItems
+
+        console.log(`quotation slots[0] prods `, quoteData.slots[0].Products);
+
+        const productsTotal = enrichedItems.reduce(
+          (sum, item) => sum + ((item.pricePerUnit || 0) * (item.quantity || 0) * (item.days || 1)),
+          0
+        );
+        const transport = Number(quoteData.transportcharge || 0);
+        const manpower = Number(quoteData.labourecharge || 0);
+        const discountPercent = Number(quoteData.discount || 0);
+        const gstPercent = Number(quoteData.GST || 0);
+
+        // Calculate totals in the new order
+        const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+        const afterDiscount = productsTotal - discountAmt;
+        const totalWithCharges = afterDiscount + transport + manpower;
+        const allSubTotal = totalWithCharges + quoteData?.refurbishment;
+        const gstAmt = gstPercent ? (gstPercent / 100 * allSubTotal) : 0;
+        // const finalTotal = Math.round(allSubTotal + gstAmt);
+        const finalTotal = allSubTotal + gstAmt;
+
+        const enrichedQuote = ({ ...quoteData, allProductsTotal: productsTotal, discountAmt, afterDiscount, totalWithCharges, gstAmt, finalTotal })
+
+        console.log({ allProductsTotal: productsTotal, discountAmt, afterDiscount, totalWithCharges, gstAmt, finalTotal, gstPercent });
+
+        setQuotation(enrichedQuote);
+        setItems(enrichedItems);
+      } catch (error) {
+        console.error("Error fetching quotation:", error);
+        setQuotation(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuotation();
+  }, [id]);
+
+
+  // ✅ Early return for loading or missing data
+  if (loading)
     return (
       <div className="container my-5">
-        <h3>No Quotation Data Provided</h3>
-        <button className="btn btn-primary" onClick={() => navigate(-1)}>
-          Go Back
-        </button>
+        <h4>Loading Quotation Invoice...</h4>
       </div>
     );
-  }
+
+  if (!quotation)
+    return (
+      <div className="container my-5">
+        <h4>No quotation found</h4>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      </div>
+    );
+
+
 
   // Calculate products total
-  const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  // const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  const productsTotal = items.reduce(
+    (sum, item) => sum + ((item.pricePerUnit || 0) * (item.quantity || 0) * (item.days || 1)),
+    0
+  );
+  console.log(`productsTotal: `, productsTotal);
+
   const transport = Number(quotation.transportcharge || 0);
   const manpower = Number(quotation.labourecharge || 0);
   const discountPercent = Number(quotation.discount || 0);
@@ -38,6 +146,7 @@ const QuotationInvoice = () => {
   const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
   const afterDiscount = productsTotal - discountAmt;
   const totalWithCharges = afterDiscount + transport + manpower;
+  const allSubTotal = totalWithCharges + quotation?.refurbishment;
   const gstAmt = gstPercent ? (gstPercent / 100 * totalWithCharges) : 0;
   const finalTotal = Math.round(totalWithCharges + gstAmt);
 
@@ -140,15 +249,17 @@ const QuotationInvoice = () => {
                 {/* <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || quotation?.quoteTime}</td> */}
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot || quotation?.quoteTime}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>
-                  {product.image && (
+                  {product.ProductIcon && (
                     <img
-                      src={`${ImageApiURL}/product/${product.image}`}
+                      src={`${ImageApiURL}/product/${product.ProductIcon}`}
                       alt={product.productName}
                       style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                     />
                   )}
                 </td>
-                <td style={{ border: "1px solid #666", padding: 8 }}>{product.pricePerUnit}</td>
+                {/* {console.log(`${idx} product: `, product)} */}
+                {/* {console.log(`"${ImageApiURL}/product/${product.ProductIcon}"`)} */}
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.price}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.quantity}</td>
                 <td style={{ border: "1px solid #666", padding: 8 }}>{product.days}</td>
                 <td style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>{product.amount * product.days}</td>
@@ -196,6 +307,12 @@ const QuotationInvoice = () => {
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Reupholestry</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
                 ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Sub-Total</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{(allSubTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
             {quotation?.GST != 0 && quotation?.GST > 0 && (

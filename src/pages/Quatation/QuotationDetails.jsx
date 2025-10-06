@@ -33,7 +33,7 @@ import autoTable from "jspdf-autotable";
 import DatePicker from "react-datepicker";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const parseDate = (str) => {
+export const parseDate = (str) => {
   // console.log("parseDate str error: ", str)
   if (!str) return null; // If date is undefined or null, return null.
   const [day, month, year] = str.split("-"); // Assuming date format is DD-MM-YYYY
@@ -43,7 +43,7 @@ const parseDate = (str) => {
 const formatDateToDDMMYYYY = (date) => {
   if (!date) return null; // If date is null or undefined, return null.
   if (!(date instanceof Date) || isNaN(date)) {
-    console.log("formatDateToDDMMYYYY date:", date)
+    // console.log("formatDateToDDMMYYYY date:", date)
     return null;
   }
   const day = String(date.getDate()).padStart(2, "0"); // Add leading zero if needed
@@ -85,6 +85,7 @@ const QuotationDetails = () => {
   const [refurbishment, setRefurbishment] = useState(0);
   const originalQuotationRef = React.useRef(null);
   const [editDraft, setEditDraft] = useState({});
+  const [tempDraft, setTempDraft] = useState({});
 
 
   // const [grandTotal, setGrandTotal] = useState(0)
@@ -114,6 +115,7 @@ const QuotationDetails = () => {
         console.log("getquotation/ quoteData products: ", res.data.quoteData.slots[0].Products);
         // console.log("quoteData slots", res.data.quoteData.slots)
         setQuotation(res.data.quoteData);
+        setTempDraft(res.data.quoteData)
         originalQuotationRef.current = JSON.parse(JSON.stringify(res.data.quoteData || {}));
       } catch (error) {
         setQuotation(null);
@@ -132,8 +134,8 @@ const QuotationDetails = () => {
         // Populate productDates for each product in each slot
         quotation.slots.forEach((slot) => {
           slot.Products.forEach((product) => {
-            console.log("slots product:", product)
-            console.log("formatDateToDDMMYYYY(product.productQuoteDate): ", formatDateToDDMMYYYY(product.productQuoteDate))
+            // console.log("slots product:", product)
+            // console.log("formatDateToDDMMYYYY(product.productQuoteDate): ", formatDateToDDMMYYYY(product.productQuoteDate))
             // initialProductDates[product.productId] = {
             //   productQuoteDate: formatDateToDDMMYYYY(product.productQuoteDate), // Use slot's quoteDate
             //   productEndDate: formatDateToDDMMYYYY(product.productEndDate), // Use slot's endDate
@@ -431,8 +433,8 @@ const QuotationDetails = () => {
       console.log("product: ", productDates)
       console.log("items: ", items)
 
-      // console.log(`orderDetails: `, orderDetails.slots[0]);
-      // return
+      console.clear()
+      console.log(`orderDetails: `, orderDetails.slots[0]);
 
       // Make the API call to create the order
       const response = await axios.post(
@@ -449,9 +451,9 @@ const QuotationDetails = () => {
         // Example: setOrderDetails(response.data);
       }
     } catch (error) {
-      toast.error("error creating order")
+      toast.error(error?.response?.data?.message || 'error creating order')
       // Handle errors during the API call
-      console.error("Error creating order:", error);
+      console.error("Error creating order:", error?.response?.data?.message);
     } finally {
       handleCloseGenerateModal();
       setPaymentLoading(false)
@@ -594,7 +596,8 @@ const QuotationDetails = () => {
           return
         }
       } else {
-        return
+        // handleCancelAll()
+        // return
       }
     }
     navigate(`/quotation/invoice/${quotation._id}`, { state: { quotation, items, productDates } });
@@ -775,6 +778,9 @@ const QuotationDetails = () => {
 
   // Use values from quotation or 0 if not present
   const discount = Number(quotation?.discount || 0);
+  // Calculate after discount
+  const discountAmt = subtotal * (discount / 100);
+
   const transport = Number(quotation?.transportcharge || 0);
   const manpower = Number(quotation?.labourecharge || 0);
   // const roundOff = Number(quotation?.adjustments || quotation?.roundOff || 0);
@@ -783,8 +789,6 @@ const QuotationDetails = () => {
   // Add transport and manpower
   const afterCharges = subtotal + transport + manpower;
 
-  // Calculate after discount
-  const discountAmt = afterCharges * (discount / 100);
   const afterDiscount = afterCharges - discountAmt;
 
   // GST calculation (if GST is a percentage)
@@ -792,6 +796,7 @@ const QuotationDetails = () => {
 
   // Grand total
   const grandTotal = Math.round(afterDiscount + gstAmt);
+  console.log({ subtotal, discountAmt, transport, manpower, gst, gstAmt, afterCharges, afterDiscount })
 
   // const handleEdit = (idx, qty) => {
   //   setEditIdx(idx);
@@ -886,6 +891,16 @@ const QuotationDetails = () => {
     const draft = editDraft[item.productId];
     if (!draft) return;
 
+    // console.log(`editdraft: `, editDraft);
+    // console.log(`editDraft[item.productId].productQuoteDate: `, editDraft[item.productId].productQuoteDate);
+
+    // if (editDraft[item.productId].productQuoteDate > editDraft[item.productId].productEndDate) {
+    //   toast.error('dates ahead')
+    // } else{
+    //   toast.success('success')
+    // }
+    // return
+
     // commit draft into productDates
     setProductDates((prev) => ({
       ...prev,
@@ -973,7 +988,7 @@ const QuotationDetails = () => {
     setItems(updatedItems);
 
   };
-  console.log("**outside quotation.slots: ", quotation?.slots[0].Products)
+  // console.log("**outside quotation.slots: ", quotation?.slots[0].Products)
 
   const handleCancelQuotation = async () => {
     console.log("quotation: ", quotation);
@@ -1002,6 +1017,7 @@ const QuotationDetails = () => {
   // Update only changed fields (top-level charges and per-product values)
   const handleUpdateQuotation = async () => {
     try {
+      setLoading(true)
       // Reuse our single diff source of truth
       const changed = hasUnsavedChanges();
       if (!changed) {
@@ -1055,8 +1071,6 @@ const QuotationDetails = () => {
       console.clear();
       console.log("Submitting minimal quotation changes:", { ...payload, Products: payload?.slots[0]?.Products });
 
-      // return;
-
       const response = await axios.put(
         `${ApiURL}/quotations/update-quotation/${quotation._id}`,
         payload
@@ -1064,305 +1078,311 @@ const QuotationDetails = () => {
       if (response.status === 200) {
         toast.success("Quotation updated successfully");
         originalQuotationRef.current = JSON.parse(JSON.stringify(quotation || {}));
+        // reload after qt updated sucfly
+        // ***DO NOT reload***
+        // we're updating & navigating to invoice page, so if we reload we're never navigating
+        // window.location.reload()
         return true;
       }
     } catch (error) {
       console.error("Error updating quotation:", error);
-      toast.error(`Failed to update quotation: ${error?.message}`);
+      toast.error(error?.response?.data?.error || `Failed to update quotation: ${error?.message}`);
+    } finally {
+      setLoading(false)
     }
   };
 
 
 
 
-  const handleDownloadPDF0 = () => {
-    const doc = new jsPDF();
+  // const handleDownloadPDF0 = () => {
+  //   const doc = new jsPDF();
 
-    const {
-      quoteId,
-      quoteDate,
-      endDate,
-      clientName,
-      clientNo,
-      executivename,
-      placeaddress,
-      address,
-      status,
-      slots = [],
-      discount,
-      transportcharge,
-      labourecharge,
-      GrandTotal,
-      adjustments,
-      GST,
-    } = quotation;
+  //   const {
+  //     quoteId,
+  //     quoteDate,
+  //     endDate,
+  //     clientName,
+  //     clientNo,
+  //     executivename,
+  //     placeaddress,
+  //     address,
+  //     status,
+  //     slots = [],
+  //     discount,
+  //     transportcharge,
+  //     labourecharge,
+  //     GrandTotal,
+  //     adjustments,
+  //     GST,
+  //   } = quotation;
 
-    const slot = slots[0];
-    const products = slot?.Products || [];
+  //   const slot = slots[0];
+  //   const products = slot?.Products || [];
 
-    const parseDate = (str) => {
-      const [day, month, year] = str.split("-");
-      return new Date(`${year}-${month}-${day}`);
-    };
+  //   const parseDate = (str) => {
+  //     const [day, month, year] = str.split("-");
+  //     return new Date(`${year}-${month}-${day}`);
+  //   };
 
-    // === HEADER ===
-    doc.setFontSize(18);
-    doc.text("NNC Event Rentals", 105, 20, { align: "center" });
-    doc.setFontSize(14);
-    doc.text("Quotation", 105, 28, { align: "center" });
+  //   // === HEADER ===
+  //   doc.setFontSize(18);
+  //   doc.text("NNC Event Rentals", 105, 20, { align: "center" });
+  //   doc.setFontSize(14);
+  //   doc.text("Quotation", 105, 28, { align: "center" });
 
-    // === INFO TABLE ===
-    doc.setFontSize(11);
-    const info = [
-      ["Company Name", clientName],
-      ["Contact Number", clientNo],
-      ["Executive Name", executivename],
-      ["Venue", placeaddress],
-      ["Delivery Date", quoteDate],
-      ["End Date", endDate],
-      ["Address", address],
-      ["Status", status],
-    ];
+  //   // === INFO TABLE ===
+  //   doc.setFontSize(11);
+  //   const info = [
+  //     ["Company Name", clientName],
+  //     ["Contact Number", clientNo],
+  //     ["Executive Name", executivename],
+  //     ["Venue", placeaddress],
+  //     ["Delivery Date", quoteDate],
+  //     ["End Date", endDate],
+  //     ["Address", address],
+  //     ["Status", status],
+  //   ];
 
-    autoTable(doc, {
-      startY: 36,
-      head: [],
-      body: info,
-      theme: "plain",
-      styles: { fontSize: 11 },
-      columnStyles: {
-        0: { fontStyle: "bold", cellWidth: 45 },
-        1: { cellWidth: 120 },
-      },
-      tableLineWidth: 0,
-    });
+  //   autoTable(doc, {
+  //     startY: 36,
+  //     head: [],
+  //     body: info,
+  //     theme: "plain",
+  //     styles: { fontSize: 11 },
+  //     columnStyles: {
+  //       0: { fontStyle: "bold", cellWidth: 45 },
+  //       1: { cellWidth: 120 },
+  //     },
+  //     tableLineWidth: 0,
+  //   });
 
-    // === PRODUCT TABLE ===
-    const productRows = products.map((p) => {
-      // const days =
-      //   quoteDate && endDate
-      //     ? (parseDate(endDate) - parseDate(quoteDate)) /
-      //     (1000 * 60 * 60 * 24) +
-      //     1
-      //     : 1;
-      const start = quoteDate instanceof Date ? quoteDate : parseDate(quoteDate);
-      const end = endDate instanceof Date ? endDate : parseDate(endDate);
-      let days = 1;
-      days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      if (isNaN(days) || days < 1) days = 1;
+  //   // === PRODUCT TABLE ===
+  //   const productRows = products.map((p) => {
+  //     // const days =
+  //     //   quoteDate && endDate
+  //     //     ? (parseDate(endDate) - parseDate(quoteDate)) /
+  //     //     (1000 * 60 * 60 * 24) +
+  //     //     1
+  //     //     : 1;
+  //     const start = quoteDate instanceof Date ? quoteDate : parseDate(quoteDate);
+  //     const end = endDate instanceof Date ? endDate : parseDate(endDate);
+  //     let days = 1;
+  //     days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  //     if (isNaN(days) || days < 1) days = 1;
 
 
-      return [
-        quoteDate,
-        p.productName,
-        "element",
-        p.availableStock,
-        p.quantity,
-        days,
-        `${Number(p.price).toLocaleString("en-IN")}`,
-        `${Number(p.total).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-        })}`,
-      ];
-    });
+  //     return [
+  //       quoteDate,
+  //       p.productName,
+  //       "element",
+  //       p.availableStock,
+  //       p.quantity,
+  //       days,
+  //       `${Number(p.price).toLocaleString("en-IN")}`,
+  //       `${Number(p.total).toLocaleString("en-IN", {
+  //         minimumFractionDigits: 2,
+  //       })}`,
+  //     ];
+  //   });
 
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 5,
-      head: [
-        [
-          "Slot Date",
-          "Product",
-          "Image",
-          "Available",
-          "Qty",
-          "Days",
-          "Price/Qty",
-          "Total",
-        ],
-      ],
-      body: productRows,
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [50, 100, 200] },
-    });
+  //   autoTable(doc, {
+  //     startY: doc.lastAutoTable.finalY + 5,
+  //     head: [
+  //       [
+  //         "Slot Date",
+  //         "Product",
+  //         "Image",
+  //         "Available",
+  //         "Qty",
+  //         "Days",
+  //         "Price/Qty",
+  //         "Total",
+  //       ],
+  //     ],
+  //     body: productRows,
+  //     styles: { fontSize: 10, cellPadding: 3 },
+  //     headStyles: { fillColor: [50, 100, 200] },
+  //   });
 
-    // === COST SUMMARY ===
-    const summary = [
-      // ["Discount (%)", `${(discount || 0).toFixed(2)}`],
-      ...(discount && discount !== 0
-        ? [
-          [`Discount (${discount}%)`, `${(quotation?.discountAmt || 0).toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-          })}`,],
-        ]
-        : []),
-      [
-        "Transportation",
-        `${Number(transportcharge || 0).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-        })}`,
-      ],
-      [
-        "Manpower Charge",
-        `${Number(labourecharge || 0).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-        })}`,
-      ],
+  //   // === COST SUMMARY ===
+  //   const summary = [
+  //     // ["Discount (%)", `${(discount || 0).toFixed(2)}`],
+  //     ...(discount && discount !== 0
+  //       ? [
+  //         [`Discount (${discount}%)`, `${(quotation?.discountAmt || 0).toLocaleString("en-IN", {
+  //           minimumFractionDigits: 2,
+  //         })}`,],
+  //       ]
+  //       : []),
+  //     [
+  //       "Transportation",
+  //       `${Number(transportcharge || 0).toLocaleString("en-IN", {
+  //         minimumFractionDigits: 2,
+  //       })}`,
+  //     ],
+  //     [
+  //       "Manpower Charge",
+  //       `${Number(labourecharge || 0).toLocaleString("en-IN", {
+  //         minimumFractionDigits: 2,
+  //       })}`,
+  //     ],
 
-      // [
-      //   "Round Off",
-      //   `Rs. ${Number(adjustments || 0).toLocaleString("en-IN", {
-      //     minimumFractionDigits: 2,
-      //   })}`,
-      // ],
-      ["GST (%)", `${(quotation?.gstAmt || 0).toFixed(2)}`],
-      [
-        "Grand Total",
-        `${Number(GrandTotal || 0).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-        })}`,
-      ],
-    ];
+  //     // [
+  //     //   "Round Off",
+  //     //   `Rs. ${Number(adjustments || 0).toLocaleString("en-IN", {
+  //     //     minimumFractionDigits: 2,
+  //     //   })}`,
+  //     // ],
+  //     ["GST (%)", `${(quotation?.gstAmt || 0).toFixed(2)}`],
+  //     [
+  //       "Grand Total",
+  //       `${Number(GrandTotal || 0).toLocaleString("en-IN", {
+  //         minimumFractionDigits: 2,
+  //       })}`,
+  //     ],
+  //   ];
 
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 10,
-      body: summary,
-      theme: "grid",
-      styles: { fontSize: 11, halign: "right" },
-      columnStyles: {
-        0: { halign: "left", fontStyle: "bold" },
-        1: { fontStyle: "normal" },
-      },
-      tableLineColor: 230,
-      tableLineWidth: 0.3,
-    });
+  //   autoTable(doc, {
+  //     startY: doc.lastAutoTable.finalY + 10,
+  //     body: summary,
+  //     theme: "grid",
+  //     styles: { fontSize: 11, halign: "right" },
+  //     columnStyles: {
+  //       0: { halign: "left", fontStyle: "bold" },
+  //       1: { fontStyle: "normal" },
+  //     },
+  //     tableLineColor: 230,
+  //     tableLineWidth: 0.3,
+  //   });
 
-    doc.save(`${quoteId || "quotation"}.pdf`);
-  };
+  //   doc.save(`${quoteId || "quotation"}.pdf`);
+  // };
 
-  const handleDownloadPDFWorking = async () => {
-    const doc = new jsPDF();
+  // const handleDownloadPDFWorking = async () => {
+  //   const doc = new jsPDF();
 
-    const imageURL = 'https://api.rentangadi.in/product/1750839736747_Retro 1 seater.png'; // Image URL
+  //   const imageURL = 'https://api.rentangadi.in/product/1750839736747_Retro 1 seater.png'; // Image URL
 
-    // Add the image to the PDF using URL
-    doc.addImage(imageURL, 'PNG', 10, 10, 50, 50); // 50x50 px image size at position (10, 10)
+  //   // Add the image to the PDF using URL
+  //   doc.addImage(imageURL, 'PNG', 10, 10, 50, 50); // 50x50 px image size at position (10, 10)
 
-    // Sample product data (just an example)
-    const productRows = [
-      ['Product 1', 'Retro 1 Seater', imageURL],
-    ];
+  //   // Sample product data (just an example)
+  //   const productRows = [
+  //     ['Product 1', 'Retro 1 Seater', imageURL],
+  //   ];
 
-    // Add product table with image in the second column
-    autoTable(doc, {
-      startY: 60,
-      head: [['Product', 'Name', 'Image']],
-      body: productRows,
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [50, 100, 200] },
-    });
+  //   // Add product table with image in the second column
+  //   autoTable(doc, {
+  //     startY: 60,
+  //     head: [['Product', 'Name', 'Image']],
+  //     body: productRows,
+  //     styles: { fontSize: 10, cellPadding: 3 },
+  //     headStyles: { fillColor: [50, 100, 200] },
+  //   });
 
-    // Save PDF
-    doc.save('quotation.pdf');
-  };
+  //   // Save PDF
+  //   doc.save('quotation.pdf');
+  // };
 
-  const handleDownloadPDF = async () => {
-    const doc = new jsPDF();
-    const imageURL = 'https://api.rentangadi.in/product/1750839736747_Retro 1 seater.png'; // Image URL
+  // const handleDownloadPDF = async () => {
+  //   const doc = new jsPDF();
+  //   const imageURL = 'https://api.rentangadi.in/product/1750839736747_Retro 1 seater.png'; // Image URL
 
-    // Helper function to get image as Base64
-    const getImageBase64 = async (url) => {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error('Failed to fetch image');
-        }
+  //   // Helper function to get image as Base64
+  //   const getImageBase64 = async (url) => {
+  //     try {
+  //       const response = await fetch(url);
+  //       if (!response.ok) {
+  //         throw new Error('Failed to fetch image');
+  //       }
 
-        const blob = await response.blob();
-        const reader = new FileReader();
+  //       const blob = await response.blob();
+  //       const reader = new FileReader();
 
-        return new Promise((resolve, reject) => {
-          reader.onloadend = () => {
-            const base64String = reader.result;
-            if (!base64String || !base64String.startsWith('data:image')) {
-              reject('Invalid Base64 string');
-            }
-            resolve(base64String);
-          };
-          reader.onerror = (error) => reject('Error converting image to Base64: ' + error);
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) {
-        console.error(error);
-        return null;
-      }
-    };
+  //       return new Promise((resolve, reject) => {
+  //         reader.onloadend = () => {
+  //           const base64String = reader.result;
+  //           if (!base64String || !base64String.startsWith('data:image')) {
+  //             reject('Invalid Base64 string');
+  //           }
+  //           resolve(base64String);
+  //         };
+  //         reader.onerror = (error) => reject('Error converting image to Base64: ' + error);
+  //         reader.readAsDataURL(blob);
+  //       });
+  //     } catch (error) {
+  //       console.error(error);
+  //       return null;
+  //     }
+  //   };
 
-    // Fetch the Base64 image before generating the PDF
-    const imageBase64 = await getImageBase64(imageURL);
+  //   // Fetch the Base64 image before generating the PDF
+  //   const imageBase64 = await getImageBase64(imageURL);
 
-    // Add Header
-    doc.setFontSize(18);
-    doc.text("NNC Event Rentals", 105, 20, { align: "center" });
-    doc.setFontSize(14);
-    doc.text("Quotation", 105, 28, { align: "center" });
+  //   // Add Header
+  //   doc.setFontSize(18);
+  //   doc.text("NNC Event Rentals", 105, 20, { align: "center" });
+  //   doc.setFontSize(14);
+  //   doc.text("Quotation", 105, 28, { align: "center" });
 
-    // === PRODUCT TABLE ===
-    const productRows = [
-      [
-        "Retro 1 Seater",  // Example product name
-        "Retro 1 Seater",  // Name
-        imageBase64 || "",  // Base64 image string or empty
-      ]
-    ];
+  //   // === PRODUCT TABLE ===
+  //   const productRows = [
+  //     [
+  //       "Retro 1 Seater",  // Example product name
+  //       "Retro 1 Seater",  // Name
+  //       imageBase64 || "",  // Base64 image string or empty
+  //     ]
+  //   ];
 
-    // Add product table with image
-    autoTable(doc, {
-      startY: 60,
-      head: [['Product', 'Name', 'Image']],
-      body: productRows,
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [50, 100, 200] },
-      didDrawCell: function (data) {
-        // If the cell is the Image column, draw the image
-        if (data.column.index === 2 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image")) {
-          // Adding image directly into the PDF
-          doc.addImage(data.cell.raw, 'PNG', data.cell.x + 2, data.cell.y + 2, 50, 50);  // Position and size of the image
-          data.cell.text = [""]; // Clear the text in the cell
-        }
-      }
-    });
+  //   // Add product table with image
+  //   autoTable(doc, {
+  //     startY: 60,
+  //     head: [['Product', 'Name', 'Image']],
+  //     body: productRows,
+  //     styles: { fontSize: 10, cellPadding: 3 },
+  //     headStyles: { fillColor: [50, 100, 200] },
+  //     didDrawCell: function (data) {
+  //       // If the cell is the Image column, draw the image
+  //       if (data.column.index === 2 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image")) {
+  //         // Adding image directly into the PDF
+  //         doc.addImage(data.cell.raw, 'PNG', data.cell.x + 2, data.cell.y + 2, 50, 50);  // Position and size of the image
+  //         data.cell.text = [""]; // Clear the text in the cell
+  //       }
+  //     }
+  //   });
 
-    // Save PDF
-    doc.save('quotation.pdf');
-  };
+  //   // Save PDF
+  //   doc.save('quotation.pdf');
+  // };
 
-  const getImageBase64 = async (url) => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch image');
-      }
+  // const getImageBase64 = async (url) => {
+  //   try {
+  //     const response = await fetch(url);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch image');
+  //     }
 
-      const blob = await response.blob();
-      const reader = new FileReader();
+  //     const blob = await response.blob();
+  //     const reader = new FileReader();
 
-      return new Promise((resolve, reject) => {
-        reader.onloadend = () => {
-          // Check if the result is a valid Base64 string
-          const base64String = reader.result;
-          if (!base64String || !base64String.startsWith('data:image')) {
-            reject('Invalid Base64 string');
-          }
-          resolve(base64String);
-        };
-        reader.onerror = (error) => reject('Error reading image: ' + error);
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error("Image fetch failed:", error);
-      return null; // Return null if there's an error fetching or converting the image
-    }
-  };
+  //     return new Promise((resolve, reject) => {
+  //       reader.onloadend = () => {
+  //         // Check if the result is a valid Base64 string
+  //         const base64String = reader.result;
+  //         if (!base64String || !base64String.startsWith('data:image')) {
+  //           reject('Invalid Base64 string');
+  //         }
+  //         resolve(base64String);
+  //       };
+  //       reader.onerror = (error) => reject('Error reading image: ' + error);
+  //       reader.readAsDataURL(blob);
+  //     });
+  //   } catch (error) {
+  //     console.error("Image fetch failed:", error);
+  //     return null; // Return null if there's an error fetching or converting the image
+  //   }
+  // };
 
   const deliveryDismantleSlots = [
     "Select Slots",
@@ -1559,7 +1579,7 @@ const QuotationDetails = () => {
                 //     ) + 1
                 //     : 1;
                 let days = 1;
-                console.log(`item fr date: `, item);
+                // console.log(`item fr date: `, item);
                 // const start = item.productQuoteDate instanceof Date ? item.productQuoteDate : parseDate(item.productQuoteDate);
                 // const end = item.productEndDate instanceof Date ? item.productEndDate : parseDate(item.productEndDate);
                 const start = item.quoteDate instanceof Date ? item.quoteDate : parseDate(item.quoteDate);
@@ -1622,8 +1642,8 @@ const QuotationDetails = () => {
                             }
                             dateFormat="dd/MM/yyyy"
                             className="form-control"
-                            minDate={parseDate(quotation?.slots[0]?.quoteDate)} // Ensure date is within range
-                            maxDate={parseDate(quotation?.slots[0]?.endDate)} // Ensure date is within range
+                            minDate={parseDate(quotation?.quoteDate)} // Ensure date is within range
+                            maxDate={parseDate(quotation?.endDate)} // Ensure date is within range
                           />
                         ) : (
                           quotation && (
@@ -1646,7 +1666,7 @@ const QuotationDetails = () => {
                         )}
 
                         <br />
-                        {console.log(`productDates `, productDates)}
+                        {/* {console.log(`productDates `, productDates)} */}
                         {editIdx === idx ? (
                           <DatePicker
                             selected={
@@ -1666,9 +1686,9 @@ const QuotationDetails = () => {
                             className="form-control"
                             minDate={
                               productDates[item.productId]?.productQuoteDate ||
-                              parseDate(quotation?.slots[0]?.quoteDate)
+                              parseDate(quotation?.quoteDate)
                             } // Ensure date is within range
-                            maxDate={parseDate(quotation?.slots[0]?.endDate)} // Ensure date is within range
+                            maxDate={parseDate(quotation?.endDate)} // Ensure date is within range
                           />
                         ) : (
                           quotation && (
@@ -1887,7 +1907,7 @@ const QuotationDetails = () => {
             variant="link"
             onClick={() => {
               setEditDiscount(true)
-              quotation.discount = 1
+              // quotation.discount = 1
               console.log(`Add discount: `, quotation.discount)
             }}
             disabled={quotation.status === "cancelled" || quotation.status === "send"}
@@ -1923,6 +1943,7 @@ const QuotationDetails = () => {
                     onClick={() => setEditDiscount(true)}>
                     <FaEdit />
                   </Button>
+                  {/* {console.log(`quotation.discount: `, quotation.discount)} */}
                   <span>-₹{(quotation.discount / 100 * quotation.allProductsTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
               </>
@@ -1932,12 +1953,13 @@ const QuotationDetails = () => {
                   <Form.Group controlId="discount" style={{ width: "150px" }}>
                     <Form.Control
                       type="number"
-                      value={quotation.discount}
+                      value={tempDraft.discount}
                       onChange={(e) => {
                         const raw = parseFloat(e.target.value) || 0;
                         const value = Math.min(100, Math.max(0, raw)); // clamp 0–100
                         // const value = parseFloat(e.target.value) || 0;
-                        setQuotation({ ...quotation, discount: value });
+                        // setQuotation({ ...quotation, discount: value });
+                        setTempDraft({ ...quotation, discount: value });
                         // Update total calculations
                         // quotation.refurbishment = value;
                       }}
@@ -1946,7 +1968,7 @@ const QuotationDetails = () => {
                     />
                   </Form.Group>
                   <Button variant="primary" size="sm" className="ms-2" onClick={() => {
-                    setQuotation({ ...quotation, discount: quotation.discount });
+                    setQuotation({ ...quotation, discount: tempDraft.discount });
                     setEditDiscount(false)
                   }}>
                     Save
@@ -1954,6 +1976,7 @@ const QuotationDetails = () => {
                   <Button variant="secondary" size="sm" className="ms-2" onClick={() => {
                     // Reset to original value
                     setQuotation(prev => ({ ...prev, discount: prev.discount }));
+                    setTempDraft(quotation)
                     setEditDiscount(false);
                   }}>
                     Cancel
@@ -1988,10 +2011,11 @@ const QuotationDetails = () => {
                   <Form.Group controlId="transportation" style={{ width: "150px" }}>
                     <Form.Control
                       type="number"
-                      value={quotation.transportcharge}
+                      value={tempDraft.transportcharge}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value) || 0;
-                        setQuotation({ ...quotation, transportcharge: value });
+                        // setQuotation({ ...quotation, transportcharge: value });
+                        setTempDraft({ ...quotation, transportcharge: value });
                         // Update total calculations
                         // quotation.refurbishment = value;
                       }}
@@ -2000,7 +2024,7 @@ const QuotationDetails = () => {
                     />
                   </Form.Group>
                   <Button variant="primary" size="sm" className="ms-2" onClick={() => {
-                    setQuotation({ ...quotation, transportcharge: quotation.transportcharge });
+                    setQuotation({ ...quotation, transportcharge: tempDraft.transportcharge });
                     setEditTransport(false)
                   }}>
                     Save
@@ -2008,6 +2032,7 @@ const QuotationDetails = () => {
                   <Button variant="secondary" size="sm" className="ms-2" onClick={() => {
                     // Reset to original value
                     setQuotation(prev => ({ ...prev, transportcharge: prev.transportcharge }));
+                    setTempDraft(quotation)
                     setEditTransport(false);
                   }}>
                     Cancel
@@ -2038,10 +2063,11 @@ const QuotationDetails = () => {
                   <Form.Group controlId="manpower" style={{ width: "150px" }}>
                     <Form.Control
                       type="number"
-                      value={quotation.labourecharge}
+                      value={tempDraft.labourecharge}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value) || 0;
-                        setQuotation({ ...quotation, labourecharge: value });
+                        // setQuotation({ ...quotation, labourecharge: value });
+                        setTempDraft({ ...quotation, labourecharge: value });
                         // Update total calculations
                         // quotation.refurbishment = value;
                       }}
@@ -2050,7 +2076,7 @@ const QuotationDetails = () => {
                     />
                   </Form.Group>
                   <Button variant="primary" size="sm" className="ms-2" onClick={() => {
-                    setQuotation({ ...quotation, labourecharge: quotation.labourecharge });
+                    setQuotation({ ...quotation, labourecharge: tempDraft.labourecharge });
                     setEditManPower(false)
                   }}>
                     Save
@@ -2058,6 +2084,7 @@ const QuotationDetails = () => {
                   <Button variant="secondary" size="sm" className="ms-2" onClick={() => {
                     // Reset to original value
                     setQuotation(prev => ({ ...prev, labourecharge: prev.labourecharge }));
+                    setTempDraft(quotation)
                     setEditManPower(false);
                   }}>
                     Cancel
@@ -2170,7 +2197,7 @@ const QuotationDetails = () => {
             </span>
           </div> */}
           {<div className="d-flex justify-content-between mb-2" style={{ fontWeight: "600" }}>
-            <span>Sub-total:</span>
+            <span>Sub-Total:</span>
             <span>₹{(quotation?.totalWithCharges || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>}
           {quotation?.GST != 0 && <div className="d-flex justify-content-between mb-2">

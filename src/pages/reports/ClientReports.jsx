@@ -82,17 +82,23 @@ const ClientReports = () => {
 				};
 			}
 
+			// clientData[clientId].totalRevenue += order.totalRevenue;
 			clientData[clientId].allProductsTotal += order.allProductsTotal;
 			clientData[clientId].totalDiscount += order.discountAmount;
 			clientData[clientId].totalRoundOff += order.roundOff;
 			clientData[clientId].totalPayments += order.totalPaid || 0;
 
+			// console.log(`order: `, order);
+
 			clientData[clientId].invoices.push({
 				_id: order.orderId,
 				invoiceDate: order.orderDate,
 				invoiceNumber: order.orderId,
+				orderTotal: order.totalAmount,
 				amount: order.allProductsTotal,
-				payments: order.totalPaid || 0
+				payments: order.totalPaid || 0,
+				paymentsList: order.payments || []   // ✅ include full payments list
+
 			});
 		});
 
@@ -180,10 +186,12 @@ const ClientReports = () => {
 					'Authorization': `Bearer ${token}` // Add token in the Authorization header
 				}
 			});
-			console.log('selectedYear: ', selectedYear, "selected month: ", selectedMonth, 'Report Data:', response.data);
 
-			console.log(`response.data: `, response.data);
-			console.log(`response.data.totalPayments: `, response.data.totalPayments);
+			console.clear();
+			console.log('selectedYear: ', selectedYear, "selected month: ", selectedMonth, 'Report Data:', response.data.orders);
+
+			console.log(`clientReportByMonth response.data: `, response.data);
+			// console.log(`response.data.totalPayments: `, response.data.totalPayments);
 			// Transform the response data into client-wise format
 			const transformedData = transformResponse(response.data);
 			setReportData(transformedData);
@@ -215,34 +223,93 @@ const ClientReports = () => {
 	});
 
 	// ✅ Export to Excel function
+	// const exportToExcel = () => {
+	// 	if (!reportData || reportData.length === 0) {
+	// 		alert("No data available to export");
+	// 		return;
+	// 	}
+
+	// 	// Prepare data for Excel
+	// 	const worksheetData = reportData.map(client => ({
+	// 		"Client Name": clientMap[client._id] || "Unknown Client",
+	// 		"Products Total": client.allProductsTotal,
+	// 		"Discount Total": client.totalDiscount,
+	// 		"RoundOff Total": client.totalRoundOff,
+	// 		"Net Total": client.allProductsTotal - client.totalDiscount - client.totalRoundOff,
+	// 		"Payments": client.totalPayments,
+	// 	}));
+
+	// 	// Create a worksheet
+	// 	const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+	// 	// Create a workbook and add worksheet
+	// 	const workbook = XLSX.utils.book_new();
+	// 	XLSX.utils.book_append_sheet(workbook, worksheet, "Client Reports");
+
+	// 	// Save the file
+	// 	const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+	// 	const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+	// 	saveAs(data, `ClientReports_${selectedYear}_${selectedMonth}.xlsx`);
+	// };
+	// ✅ Detailed Excel Export
 	const exportToExcel = () => {
 		if (!reportData || reportData.length === 0) {
 			alert("No data available to export");
 			return;
 		}
 
-		// Prepare data for Excel
-		const worksheetData = reportData.map(client => ({
-			"Client Name": clientMap[client._id] || "Unknown Client",
-			"Products Total": client.allProductsTotal,
-			"Discount Total": client.totalDiscount,
-			"RoundOff Total": client.totalRoundOff,
-			"Net Total": client.allProductsTotal - client.totalDiscount - client.totalRoundOff,
-			"Payments": client.totalPayments,
-		}));
-
-		// Create a worksheet
-		const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-
-		// Create a workbook and add worksheet
 		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Client Reports");
+
+		// Loop through each client to create rows
+		let excelRows = [];
+
+		reportData.forEach(client => {
+			const clientName = clientMap[client._id] || "Unknown Client";
+
+			client.invoices.forEach(inv => {
+				if (inv.paymentsList && inv.paymentsList.length > 0) {
+					inv.paymentsList.forEach(pmt => {
+						excelRows.push({
+							"Client Name": clientName,
+							"Event Date": moment(inv.invoiceDate).format("DD/MM/YYYY"),
+							"Orders (₹)": inv.orderTotal || 0,
+							"Total Payments (₹)": inv.payments || 0,
+							"Payment Amount (₹)": pmt.amount || 0,
+							"Payment Remarks": pmt.remarks || "-",
+						});
+					});
+				} else {
+					// If no payments, still include row
+					excelRows.push({
+						"Client Name": clientName,
+						"Event Date": moment(inv.invoiceDate).format("DD/MM/YYYY"),
+						"Orders (₹)": inv.orderTotal || 0,
+						"Total Payments (₹)": inv.payments || 0,
+						"Payment Amount (₹)": "-",
+						"Payment Remarks": "No payments",
+					});
+				}
+			});
+		});
+
+		// Create sheet
+		const worksheet = XLSX.utils.json_to_sheet(excelRows);
+
+		// Auto-size columns
+		const columnWidths = Object.keys(excelRows[0] || {}).map(key => ({
+			wch: Math.max(key.length + 2, 15),
+		}));
+		worksheet["!cols"] = columnWidths;
+
+		// Add sheet to workbook
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Client Payments");
 
 		// Save the file
 		const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
 		const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-		saveAs(data, `ClientReports_${selectedYear}_${selectedMonth}.xlsx`);
+		saveAs(data, `ClientPayments_${selectedYear}_${selectedMonth}.xlsx`);
 	};
+
 
 
 	return (
@@ -373,7 +440,7 @@ const ClientReports = () => {
 						{reportData && reportData.length > 0 ? (
 							sortClients(reportData).map((clientData, index) => (
 								<React.Fragment key={clientData._id}>
-									{console.log('clientData: ', clientData)}
+									{/* {console.log('clientData: ', clientData)} */}
 									<tr onClick={() => toggleExpand(index)} style={{ cursor: 'pointer' }}>
 										<td style={{ width: '40%' }}>
 											{clientMap[clientData._id] || 'Unknown Client'}
@@ -408,7 +475,7 @@ const ClientReports = () => {
 													</thead>
 													<tbody>
 														{clientData.invoices?.map((invoice) => (
-															<tr key={invoice._id}>																
+															<tr key={invoice._id}>									
 																<td>{moment(invoice.invoiceDate).format('DD/MM/YYYY')}</td>
 																<td>{invoice.invoiceNumber}</td>
 																<td>₹{invoice.amount.toLocaleString()}</td>
@@ -420,11 +487,114 @@ const ClientReports = () => {
 											</td>
 										</tr>
 									)} */}
+
+									{/* {expandedRows.has(index) && (
+										<tr>
+											<td colSpan={4} style={{ padding: '10px' }}>
+												<Table bordered>
+													<thead>
+														<tr>
+															<th>Event Date</th>
+															<th>Order Id</th>
+															<th>Amount</th>
+															<th>Payments</th>
+															<th>Payment Mode</th>
+														</tr>
+													</thead>
+													<tbody>
+														{clientData.invoices?.map((invoice) => (
+															<React.Fragment key={invoice._id}>
+																<tr>
+																	<td>{moment(invoice.invoiceDate).format('DD/MM/YYYY')}</td>
+																	<td>{invoice.invoiceNumber}</td>
+																	<td>₹{invoice.amount.toLocaleString()}</td>
+																	<td>₹{invoice.payments.toLocaleString()}</td>
+																	<td>
+																		{invoice.paymentsList && invoice.paymentsList.length > 0 ? (
+																			<ul className="mb-0 ps-3">
+																				{invoice.paymentsList.map((pmt) => (
+																					<li key={pmt.paymentId}>
+																						{moment(pmt.date).format('DD/MM/YYYY')}
+																					</li>
+																				))}
+																			</ul>
+																		) : (
+																			<em>No payments</em>
+																		)}
+																	</td>
+																</tr>
+															</React.Fragment>
+														))}
+
+													</tbody>
+												</Table>
+											</td>
+										</tr>
+									)} */}
+									{expandedRows.has(index) && (
+										<tr>
+											<td colSpan={6} style={{ padding: '10px' }}>
+												<Table bordered>
+													<thead>
+														<tr>
+															<th>Event Date</th>
+															<th>Order Id</th>
+															<th>Products</th>
+															<th>Orders</th>
+															<th>Total Payments</th>
+															<th>Payment Details</th>
+														</tr>
+													</thead>
+													<tbody>
+														{clientData.invoices?.map((invoice) => (
+															<tr key={invoice._id}>
+																{/* {console.log(`invoice: `, invoice)} */}
+																<td>{moment(invoice.invoiceDate).format('DD/MM/YYYY')}</td>
+																<td>{invoice.invoiceNumber}</td>
+																<td>₹{invoice.amount.toLocaleString()}</td>
+																<td>₹{invoice.orderTotal.toLocaleString()}</td>
+																<td>₹{invoice.payments.toLocaleString()}</td>
+																<td>
+																	{invoice.paymentsList && invoice.paymentsList.length > 0 ? (
+																		<Table size="sm" bordered responsive>
+																			<thead>
+																				<tr>
+																					{/* <th>Date</th> */}
+																					<th>Amount</th>
+																					{/* <th>Mode</th> */}
+																					<th>Remarks</th>
+																					{/* <th>Comment</th> */}
+																				</tr>
+																			</thead>
+																			<tbody>
+																				{invoice.paymentsList.map((pmt) => (
+																					<tr key={pmt.paymentId}>
+																						{/* <td>{moment(pmt.date).format("DD/MM/YYYY")}</td> */}
+																						<td>₹{pmt.amount}</td>
+																						{/* <td>{pmt.mode || "-"}</td> */}
+																						<td>{pmt.remarks || "-"}</td>
+																						{/* <td>{pmt.comment || "-"}</td> */}
+																					</tr>
+																				))}
+																			</tbody>
+																		</Table>
+																	) : (
+																		<em>No payments</em>
+																	)}
+																</td>
+															</tr>
+														))}
+													</tbody>
+												</Table>
+											</td>
+										</tr>
+									)}
+
 								</React.Fragment>
 							))
 						) : (
 							<tr>
-								<td colSpan={5} className="text-center py-4">
+								<td colSpan={6} className="text-center py-4">
 									No orders found
 								</td>
 							</tr>
