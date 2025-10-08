@@ -615,7 +615,7 @@ const OrderDetails = () => {
     } catch (error) {
       // Handle any errors during the Axios request
       console.error("Error updating order:", error);
-      toast.error("An error occurred while updating the order.");
+      toast.error(error?.response?.data?.message || "An error occurred while updating the order.");
     }
 
     // Reset the editing state after successful update
