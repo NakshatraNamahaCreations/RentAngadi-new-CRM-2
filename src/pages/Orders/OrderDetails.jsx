@@ -38,7 +38,7 @@ const parseDate = (str) => {
 const formatDateToDDMMYYYY = (date) => {
   if (!date) return null; // If date is null or undefined, return null.
   if (!(date instanceof Date) || isNaN(date)) {
-    console.log("formatDateToDDMMYYYY date:", date);
+    // console.log("formatDateToDDMMYYYY date:", date);
     return null;
   }
   const day = String(date.getDate()).padStart(2, "0"); // Add leading zero if needed
@@ -982,7 +982,7 @@ const OrderDetails = () => {
     }
 
     if (paymentData.status === 'Online' && (!paymentData.mode)) {
-      toast.error("Please select a payment mode")
+      toast.error("Please enter a payment mode")
       return
     }
 
@@ -2044,23 +2044,40 @@ const OrderDetails = () => {
                 </div>
               </Form.Group>
               {paymentData.status !== "Offline" && (
+                // <Form.Group className="mb-3">
+                //   <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
+                //     Payment Mode
+                //   </Form.Label>
+                //   <Form.Select
+                //     name="mode"
+                //     value={paymentData.mode}
+                //     onChange={(e) => setPaymentData((prev) => ({ ...prev, mode: e.target.value }))}
+                //     style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
+                //   >
+                //     <option value="">Select Payment Mode</option>
+                //     {/* <option value="Googlepay">Googlepay</option> */}
+                //     {/* <option value="Phonepay">Phonepay</option> */}
+                //     {/* <option value="Paytm">Paytm</option> */}
+                //     <option value="UPI">UPI</option>
+                //     <option value="Account">Account</option>
+                //     <option value="Other">Other</option>
+                //   </Form.Select>
+                // </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label style={{ fontWeight: "500", color: "#34495e" }}>
                     Payment Mode
                   </Form.Label>
-                  <Form.Select
+                  <Form.Control
+                    type="text"
                     name="mode"
                     value={paymentData.mode}
                     onChange={(e) => setPaymentData((prev) => ({ ...prev, mode: e.target.value }))}
-                    style={{ borderRadius: "6px", borderColor: "#e0e0e0" }}
-                  >
-                    <option value="">Select Payment Mode</option>
-                    <option value="Googlepay">Googlepay</option>
-                    <option value="Phonepay">Phonepay</option>
-                    <option value="Paytm">Paytm</option>
-                    <option value="UPI">UPI</option>
-                    <option value="Account">Account</option>
-                  </Form.Select>
+                    placeholder="Enter Payment Mode"
+                    style={{
+                      borderRadius: "6px",
+                      borderColor: "#e0e0e0",
+                    }}
+                  />
                 </Form.Group>
               )}
               <Form.Group className="mb-3">
