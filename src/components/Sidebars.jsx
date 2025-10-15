@@ -51,6 +51,7 @@ const Sidebars = () => {
     // { key: "addNewEnquiry", name: "Add new enq", path: "/add-new-enquiry", icon: MdInventory },
     // { key: "myOrders", name: "Add new enq", path: "/my-orders", icon: MdInventory },
     { key: "enquiryCalendar", name: "Enquiry Calendar", path: "/enquiry-calender", icon: FaCalendarAlt },
+    { key: "quotationCalendar", name: "Quotation Calendar", path: "/qt-calender", icon: FaCalendarAlt },
     { key: "enquiryList", name: "Enquiry List", path: "/enquiry-list", icon: MdOutlineSupportAgent },
     { key: "quotation", name: "Quotation", path: "/quotation", icon: FaFileInvoiceDollar },
     { key: "orders", name: "Orders", path: "/orders", icon: FaShoppingBag },
@@ -74,11 +75,11 @@ const Sidebars = () => {
   ];
 
   useEffect(() => {
-    console.log(`sidebar mounted `);
+    // console.log(`sidebar mounted `);
 
 
     const fetchAdminPermissions = async () => {
-      console.log(`fetching permissions in sidebar`);
+      // console.log(`fetching permissions in sidebar`);
       const storedData = sessionStorage.getItem("permissions");
       if (storedData) {
         const { data, expiry } = JSON.parse(storedData);
@@ -102,7 +103,7 @@ const Sidebars = () => {
             Authorization: `Bearer ${token}`
           },
         })
-        console.log(`admin access: `, res.data);
+        // console.log(`admin access: `, res.data);
         // const expiryTime = new Date().getTime() + 7200000;  // 2 hour from now (7200000 ms = 2 hour)
 
         // console.log(`current time: `, new Date().getTime());
@@ -129,7 +130,7 @@ const Sidebars = () => {
     (userAccess[item.key] || userAccess.length === 0)
   );
 
-  console.log(`filtered menu items: `, filtered);
+  // console.log(`filtered menu items: `, filtered);
 
   const isActiveLink = (path) => {
     return location.pathname.includes(path);
@@ -159,7 +160,7 @@ const Sidebars = () => {
       </div>
 
       <ul className="nav flex-column mt-2">
-        {console.log(`useracess: `, userAccess)}
+        {/* {console.log(`useracess: `, userAccess)} */}
         {/* {(userAccess?.superAdmin === true ? menuItems : filtered).map((item, index) => ( */}
         {menuItems.map((item, index) => (
           <li key={index} className="nav-item my-1">

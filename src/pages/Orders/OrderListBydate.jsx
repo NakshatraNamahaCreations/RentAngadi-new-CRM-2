@@ -220,7 +220,7 @@ const OrderListBydate = () => {
                   <th style={{ width: "15%" }}>Company Name</th>
                   <th style={{ width: "15%" }}>Executive Name</th>
                   <th style={{ width: "10%" }}>Grand Total</th>
-                  <th style={{ width: "10%" }}>Quote Date</th>
+                  <th style={{ width: "10%" }}>Event Date</th>
                   <th style={{ width: "25%" }}>Address</th>
                   <th style={{ width: "5%" }} className="text-center">
                     Action

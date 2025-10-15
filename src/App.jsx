@@ -36,6 +36,8 @@ import ClientReports from "./pages/reports/ClientReports.jsx";
 import Reports from "./pages/reports/Reports";
 import DamagedProductList from "./pages/Product/DamagedProductList.jsx";
 import OrderSheet from "./pages/Orders/OrderSheet.jsx";
+import QuotationCalendar from "./pages/Quatation/QuotationCalender.jsx";
+import QuotationsByDate from "./pages/Quatation/QuotationByDate.jsx";
 // import AdminRights from "./pages/Admin/AdminRights.jsx";
 // import AdminDetails from "./pages/Admin/AdminDetails.jsx";
 // import ExecutiveManagement from "./pages/Admin/ExecutiveManagement.jsx";
@@ -83,7 +85,7 @@ function App() {
           }
         })()}>
           <Routes>
-            {/* <Route path="/" element={<Dashboard />} /> */}
+            <Route path="/" element={<Dashboard />} />
             {/* <Route path="/admin-rights" element={<AdminRights />} /> */}
             {/* <Route path="/admin-details/:id" element={<AdminDetails />} /> */}
             {/* <Route path="/executive-management" element={<ExecutiveManagement />} /> */}
@@ -102,9 +104,11 @@ function App() {
             <Route path="/invoice/:id" element={<Invoice />} />
             <Route path="/enquiry-list" element={<EnquiryList />} />
             <Route path="/enquiry-calender" element={<EnquiryCalender />} />
+            <Route path="/qt-calender" element={<QuotationCalendar />} />
             <Route path="/add-new-enquiry" element={<AddNewEnquiry />} />
             <Route path="/enquiry-details/:id" element={<EnquiryDetails />} />
             <Route path="/enquiries-by-date/:date" element={<EnquiryByDate />} />
+            <Route path="/quotations-by-date/:date" element={<QuotationsByDate />} />
             <Route path="/orders-by-date/:date" element={<OrderListBydate />} />
             <Route path="/terms-conditions" element={<TermsAndConditions />} />
             <Route path="/quotation" element={<Quotation />} />

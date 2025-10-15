@@ -276,10 +276,14 @@ const Header = () => {
       setCurrentTab("Terms & Conditions");
     } else if (matchPath("/quotation", path)) {
       setCurrentTab("Quotation");
+    } else if (matchPath("/qt-calender", path)) {
+      setCurrentTab("Quotation calender");
     } else if (matchPath("/quotation-details/:id", path)) {
       setCurrentTab("Quotation Details");
     } else if (matchPath("/quotation/invoice/:id", path)) {
       setCurrentTab("Quotation Invoice");
+    } else if (matchPath("/quotations-by-date/:id", path)) {
+      setCurrentTab("Quotations by date");
     } else if (matchPath("/payment-report", path)) {
       setCurrentTab("Payment Report");
     } else if (matchPath("/reports", path)) {
@@ -318,6 +322,7 @@ const Header = () => {
     "/orders",
     "/enquiry-list",
     "/enquiry-calender",
+    "/qt-calender",
     "/quotation",
     "/terms-conditions",
     "/payment-report",
