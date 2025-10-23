@@ -5,7 +5,8 @@ import html2pdf from "html2pdf.js";
 import { ImageApiURL, ApiURL } from "../../api";
 import { Container, Spinner, Button } from "react-bootstrap";
 import axios from "axios";
-import { parseDate } from "../Quatation/QuotationDetails";
+// import { parseDate } from "../Quatation/QuotationDetails";
+import { parseDate } from "../../utils/parseDates";
 
 const OrderSheet = () => {
   const { id } = useParams();

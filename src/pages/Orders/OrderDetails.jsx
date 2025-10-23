@@ -1132,19 +1132,19 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Venue address:</span>
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
-                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Grand Total: </span>
                   <span style={valueStyle}>₹ {grandTotal}</span>
-                </div> */}
+                </div>
                 {/* )} */}
-                {/* <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Man power: </span>
                   <span style={valueStyle}>₹ {order.labourecharge}</span>
                 </div>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Transport: </span>
                   <span style={valueStyle}>₹ {order.transportcharge}</span>
-                </div> */}
+                </div>
                 {/* <div
                   className="mb-1"
                   style={{ display: "flex", gap: "10px", alignItems: "center", lineHeight: "1.2" }}

@@ -4,8 +4,9 @@ import html2pdf from "html2pdf.js";
 import { ApiURL, ImageApiURL } from "../../api";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import axios from 'axios';
-import QuotationDetails, { parseDate } from "./QuotationDetails";
+import QuotationDetails from "./QuotationDetails";
 import { safeNumber } from "../../utils/numberUtils";
+import { parseDate } from "../../utils/parseDates";
 
 const QuotationInvoice = () => {
   const location = useLocation();

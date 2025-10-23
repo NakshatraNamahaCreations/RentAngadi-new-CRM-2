@@ -32,13 +32,14 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import DatePicker from "react-datepicker";
 import { useLocation, useNavigate } from "react-router-dom";
+import { parseDate } from "../../utils/parseDates";
 
-export const parseDate = (str) => {
-  // console.log("parseDate str error: ", str)
-  if (!str) return null; // If date is undefined or null, return null.
-  const [day, month, year] = str.split("-"); // Assuming date format is DD-MM-YYYY
-  return new Date(`${year}-${month}-${day}`); // Convert to YYYY-MM-DD format for JavaScript Date
-};
+// export const parseDate = (str) => {
+//   // console.log("parseDate str error: ", str)
+//   if (!str) return null; // If date is undefined or null, return null.
+//   const [day, month, year] = str.split("-"); // Assuming date format is DD-MM-YYYY
+//   return new Date(`${year}-${month}-${day}`); // Convert to YYYY-MM-DD format for JavaScript Date
+// };
 
 const formatDateToDDMMYYYY = (date) => {
   if (!date) return null; // If date is null or undefined, return null.
@@ -429,6 +430,7 @@ const QuotationDetails = () => {
 
       // console.log("orderdetails config: ", orderDetails);
       // console.log("orderdetails config enough: ", orderDetails.slots[0].products[0]);
+      console.clear()
       console.log("orderdetails config enough: ", orderDetails.slots[0].products);
       console.log("product: ", productDates)
       console.log("items: ", items)
@@ -796,7 +798,7 @@ const QuotationDetails = () => {
 
   // Grand total
   const grandTotal = Math.round(afterDiscount + gstAmt);
-  console.log({ subtotal, discountAmt, transport, manpower, gst, gstAmt, afterCharges, afterDiscount })
+  console.log({ subtotal, discountAmt, transport, manpower, gst, gstAmt, afterCharges, afterDiscount, finalTotal:quotation?.finalTotal })
 
   // const handleEdit = (idx, qty) => {
   //   setEditIdx(idx);
@@ -2279,7 +2281,8 @@ const QuotationDetails = () => {
             disabled={quotation.status === "cancelled" || quotation.status === "send"}
             onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
             onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
-            onClick={handleShowGenerateModal}
+            // onClick={handleShowGenerateModal}
+            onClick={handleGenerateOrder}
           >
             Generate Order
           </Button>

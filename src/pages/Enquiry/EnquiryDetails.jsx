@@ -39,7 +39,7 @@ const EnquiryDetails = () => {
   const [manpower, setManpower] = useState("");
   const [transport, setTransport] = useState("");
   const [discount, setDiscount] = useState("");
-  const [gst, setGst] = useState("");
+  const [gst, setGst] = useState("18");
   const [roundOff, setRoundOff] = useState("");
   const [enquiry, setEnquiry] = useState(null);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -176,6 +176,7 @@ const EnquiryDetails = () => {
     (sum, p) => (confirmed[p.productId] ? sum + (p.qty * p.price * daysDiff) : sum),
     0
   );
+  // console.log(`daysDiff: `, daysDiff, `totalAmount: `, totalAmount);
 
   const fetchAllProducts = async () => {
     try {
@@ -424,8 +425,10 @@ const EnquiryDetails = () => {
       } else {
         alert("An error occurred. Please try again later.");
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+
   };
 
   // older code
@@ -569,6 +572,8 @@ const EnquiryDetails = () => {
   const totalAfterCharges = totalBeforeCharges + Number(manpower || 0) + Number(transport || 0);
   const gstAmt = totalAfterCharges * (Number(gst || 0) / 100);
   const grandTotal = Math.round(totalAfterCharges + gstAmt + Number(roundOff || 0));
+  console.log({ allProductsTotal: totalAmount, discountAmt, totalBeforeCharges, totalAfterCharges, gstAmt, grandTotal });
+
 
   const isAnyProductInsufficient = filteredProducts.some((p) => {
     const stock =
@@ -1130,7 +1135,8 @@ const EnquiryDetails = () => {
                     }
                     onChange={(opt) => setGst(opt ? opt.value : "")}
                     placeholder="Select GST"
-                    isDisabled={enquiry?.status === "sent"}
+                    // isDisabled={enquiry?.status === "sent"}
+                    isDisabled={true}
                   />
                 </Form.Group>
               </Col>

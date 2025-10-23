@@ -51,7 +51,7 @@ const AddNewEnquiry = () => {
   const [enquiryDate, setEnquiryDate] = useState("06-09-2025");
   const [endDate, setEndDate] = useState("06-12-2025");
   const [ExecutiveName, setExecutiveName] = useState("");
-  const [placeaddress, setPlaceaddress] = useState("get 1");
+  const [placeaddress, setPlaceaddress] = useState("");
   const [selectslots, setSelectslots] = useState("");
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("");
@@ -274,11 +274,11 @@ const AddNewEnquiry = () => {
 
     // return
 
-    if (deliveryDateOnly > dismantleDateOnly) {
-      console.log(`deliveryDate < dismantleDate: `, deliveryDate, dismantleDate);
-      alert("Delivery date cannot be after Dismantle date");
-      return;
-    }
+    // if (deliveryDateOnly > dismantleDateOnly) {
+    //   console.log(`deliveryDate < dismantleDate: `, deliveryDate, dismantleDate);
+    //   alert("Delivery date cannot be after Dismantle date");
+    //   return;
+    // }
 
     const executives = chosenClient.executives;
 
@@ -374,7 +374,7 @@ const AddNewEnquiry = () => {
         setClientName("");
         setAddress("");
         setExecutiveName("");
-        setPlaceaddress("get 1");
+        setPlaceaddress("");
         setSelectslots("");
         setDeliveryTimeSlot("");
         setDeliverySlot("");
@@ -393,7 +393,7 @@ const AddNewEnquiry = () => {
       console.error("error: ", error);
       // console.log(`toast err: `, error?.response?.data?.error); 
       // toast.error("An error occurred: ", error?.response?.data?.error);
-      const errorMessage = error?.response?.data?.error ||
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || 
         (error?.message ? `Error: ${error.message}` : "An unexpected error occurred");
       console.log(`Error message: ${errorMessage}`);
       toast.error(errorMessage);
@@ -814,7 +814,7 @@ const AddNewEnquiry = () => {
           </Form>
         </Card.Body>
       </Card>
-    </Container >
+    </Container>
   );
 };
 
