@@ -99,6 +99,12 @@ const OrderDetails = () => {
   const [roundOff, setRoundOff] = useState(0);
   const [isEditingRoundOff, setIsEditingRoundOff] = useState(false);
 
+  const [additionalTransportation, setAdditionalTransportation] = useState(0);
+  const [isEditingTransport, setIsEditingTransport] = useState(false);
+  const [isSavingTransport, setIsSavingTransport] = useState(false);
+
+
+
   const handleShowGenerateModal = () => setShowGenerateModal(true);
   const handleCloseGenerateModal = () => setShowGenerateModal(false);
 
@@ -235,6 +241,7 @@ const OrderDetails = () => {
       console.log("fetchorder details products only: ", res.data.order.slots[0].products);
       if (res.status === 200) {
         setOrder(res.data.order); // <-- Make sure your backend returns the order details
+        setAdditionalTransportation(res.data.order?.additionalTransportation || 0);
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -809,12 +816,13 @@ const OrderDetails = () => {
     const discountPercent = order.discount || 0;
     const refurbishmentAmount = order.refurbishmentAmount || 0;
     const gstPercent = order.GST || 0;
+    const additionalTransportation = order.additionalTransportation || 0;
     // const adjustments = order.adjustments || 0;
 
     // const subtotal = productTotal + labour + transport - adjustments;
     const discountAmount = (allProductsTotal * discountPercent) / 100;
     const totalBeforeCharges = allProductsTotal - discountAmount;
-    const totalAfterCharges = totalBeforeCharges + labour + transport + refurbishmentAmount;
+    const totalAfterCharges = totalBeforeCharges + labour + transport + refurbishmentAmount + additionalTransportation;
     const gstAmount = ((totalAfterCharges) * gstPercent) / 100;
 
     // console.log("calc: ", subtotal - discountAmount + gstAmount)
@@ -1058,6 +1066,42 @@ const OrderDetails = () => {
     setIsEditingRoundOff(false);
   };
 
+  const handleTransportChange = (e) => {
+    const value = parseInt(e.target.value) || 0;
+    setAdditionalTransportation(value);
+  };
+
+  const handleSaveTransport = async () => {
+    try {
+      setIsSavingTransport(true);
+      const response = await axios.put(`${ApiURL}/order/updateOrderFields`, {
+        orderId: order._id,
+        additionalTransportation,
+      });
+
+      if (response.status === 200) {
+        toast.success("Transportation charge updated successfully!");
+        setIsEditingTransport(false);
+        // fetchOrderDetails(); // refresh order
+        window.location.reload();
+      } else {
+        toast.error("Failed to update transportation charge");
+      }
+    } catch (error) {
+      console.error("Error updating transport:", error);
+      toast.error("Error occurred while updating transportation charge");
+    } finally {
+      setIsSavingTransport(false);
+    }
+  };
+
+  const handleCancelTransportEdit = () => {
+    setAdditionalTransportation(order.additionalTransportation || 0);
+    setIsEditingTransport(false);
+  };
+
+
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
@@ -1134,7 +1178,8 @@ const OrderDetails = () => {
                 </div>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Grand Total: </span>
-                  <span style={valueStyle}>₹ {grandTotal}</span>
+                  {/* <span style={valueStyle}>₹ {grandTotal}</span> */}
+                  <span style={valueStyle}>₹ {order?.GrandTotal || "N/A"}</span>
                 </div>
                 {/* )} */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
@@ -1145,6 +1190,68 @@ const OrderDetails = () => {
                   <span style={labelStyle}>Transport: </span>
                   <span style={valueStyle}>₹ {order.transportcharge}</span>
                 </div>
+                <div
+                  className="mb-1"
+                  style={{ display: "flex", gap: "10px", alignItems: "center" }}
+                >
+                  <span style={labelStyle}>Additional Transportation:</span>
+
+                  {!isEditingTransport ? (
+                    <>
+                      <span style={valueStyle}>
+                        ₹ {order.additionalTransportation ?? 0}
+                      </span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        style={{
+                          padding: "0",
+                          height: "20px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                        onClick={() => setIsEditingTransport(true)}
+                        disabled={order && order.orderStatus === "cancelled"} // ✅ correct placement
+                      >
+                        <FaEdit style={{ fontSize: "14px", margin: "0" }} />
+                      </Button>
+                    </>
+                  ) : (
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <Form.Control
+                        type="number"
+                        step="1"
+                        value={additionalTransportation}
+                        onChange={handleTransportChange}
+                        style={{ maxWidth: "100px", height: "30px" }}
+                        disabled={order && order.orderStatus === "cancelled"} // ✅ also disable input
+                      />
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={handleSaveTransport}
+                        disabled={
+                          isSavingTransport || (order && order.orderStatus === "cancelled")
+                        } // ✅ disable when cancelled
+                      >
+                        {isSavingTransport ? (
+                          <Spinner animation="border" size="sm" />
+                        ) : (
+                          <FaCheck />
+                        )}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={handleCancelTransportEdit}
+                        disabled={order && order.orderStatus === "cancelled"} // ✅ disable cancel too
+                      >
+                        <FaTimes />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
                 {/* <div
                   className="mb-1"
                   style={{ display: "flex", gap: "10px", alignItems: "center", lineHeight: "1.2" }}
@@ -2138,7 +2245,7 @@ const OrderDetails = () => {
           </Modal.Footer>
         </Modal>
       </div>
-    </div>
+    </div >
   );
 };
 

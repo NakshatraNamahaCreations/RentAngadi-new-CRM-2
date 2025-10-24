@@ -73,6 +73,7 @@ const Invoice = () => {
   const manpower = Number(order?.labourecharge || 0);
   const gst = Number(order?.GST || 0);
   const refurbishment = Number(order?.refurbishmentAmount || 0);
+  const additionalTransportation = Number(order?.additionalTransportation || 0);
 
   // // Calculate totals
   const subtotal = items.reduce((sum, item) => {
@@ -82,7 +83,7 @@ const Invoice = () => {
 
   const discountAmt = (subtotal * discount) / 100;
   const totalBeforeCharges = subtotal - discountAmt;
-  const totalAfterCharges = totalBeforeCharges + manpower + transport + refurbishment;
+  const totalAfterCharges = totalBeforeCharges + manpower + transport + refurbishment + additionalTransportation;
   const gstAmt = (totalAfterCharges * gst) / 100;
   // const grandTotal = totalAfterCharges + gstAmt;
   const roundOff = Number(order?.roundOff || 0);
@@ -354,6 +355,12 @@ const Invoice = () => {
               <b>{"Reupholestry Charges"}</b>
             </td>
             <td>₹ {refurbishment.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>
+              <b>{"Additional Transportation Charges"}</b>
+            </td>
+            <td>₹ {additionalTransportation.toFixed(2)}</td>
           </tr>
           <tr>
             <td>
