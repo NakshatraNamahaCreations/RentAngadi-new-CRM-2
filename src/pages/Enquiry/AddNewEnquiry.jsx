@@ -15,6 +15,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import { toast } from "react-hot-toast";
+import Select from "react-select";
 
 const deliveryDismantleSlots = [
   "Select Delivery & Dismantle Slots",
@@ -430,20 +431,19 @@ const AddNewEnquiry = () => {
                   <Col md={4}>
                     <Form.Group>
                       <Form.Label>Company Name</Form.Label>
-                      <Form.Select
-                        // value={company}
-                        value={companyId}
-                        onChange={(e) => setCompanyId(e.target.value)}
-                      >
-                        <option value="">Select Company Name</option>
-                        {/* {console.log(`clientData`, clientData)} */}
-                        {clientData.map((c) => (
-                          // <option key={c.phoneNumber} value={c.name}>
-                          <option key={c._id} value={c._id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </Form.Select>
+                      <Select
+                        options={clientData.map((c) => ({
+                          value: c._id,
+                          label: c.name,
+                        }))}
+                        value={clientData
+                          .filter((c) => c._id === companyId)
+                          .map((c) => ({ value: c._id, label: c.name }))[0] || null}
+                        onChange={(selected) => setCompanyId(selected ? selected.value : "")}
+                        placeholder="Search Company Name..."
+                        isClearable
+                        isSearchable
+                      />
                     </Form.Group>
                   </Col>
                   {/* <Col md={2} className="d-flex align-items-end ">
