@@ -824,6 +824,7 @@ const OrderDetails = () => {
     const totalBeforeCharges = allProductsTotal - discountAmount;
     const totalAfterCharges = totalBeforeCharges + labour + transport + refurbishmentAmount + additionalTransportation;
     const gstAmount = ((totalAfterCharges) * gstPercent) / 100;
+    const grandTotal = Math.round(totalAfterCharges + gstAmount);
 
     // console.log("calc: ", subtotal - discountAmount + gstAmount)
 
@@ -839,10 +840,27 @@ const OrderDetails = () => {
     // console.log("gstPercent: ", gstPercent)
     // console.log("gstAmount: ", gstAmount)
 
-    return Math.round(totalAfterCharges + gstAmount);
+    // return Math.round(totalAfterCharges + gstAmount);
+    return {
+      grandTotal,
+      discountAmount,
+      totalBeforeCharges,
+      totalAfterCharges,
+      gstAmount,
+      allProductsTotal,
+    };
+
   };
 
-  const grandTotal = order ? calculateGrandTotal(order) : 0;
+  const {
+    grandTotal,
+    discountAmount,
+    totalBeforeCharges,
+    totalAfterCharges,
+    gstAmount,
+    allProductsTotal,
+  } = order ? calculateGrandTotal(order) : {};
+
 
   useEffect(() => {
     // const paid = order?.payments.reduce((acc, curr) => acc + curr?.advancedAmount, 0)
@@ -1177,11 +1195,11 @@ const OrderDetails = () => {
                   <span style={valueStyle}>{order.Address}</span>
                 </div>
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
-                  <span style={labelStyle}>Grand Total: </span>
-                  {/* <span style={valueStyle}>₹ {grandTotal}</span> */}
-                  <span style={valueStyle}>₹ {order?.GrandTotal || "N/A"}</span>
+                  <span style={labelStyle}>Sub total:</span>
+                  <span style={valueStyle}>₹ {totalBeforeCharges || 0}</span>
+                  {/* <span style={valueStyle}>{order.Address}</span> */}
+
                 </div>
-                {/* )} */}
                 <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
                   <span style={labelStyle}>Man power: </span>
                   <span style={valueStyle}>₹ {order.labourecharge}</span>
@@ -1251,6 +1269,22 @@ const OrderDetails = () => {
                     </div>
                   )}
                 </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>Total:</span>
+                  <span style={valueStyle}>₹ {totalAfterCharges || 'N/A'}</span>
+                </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>GSt(18%):</span>
+                  <span style={valueStyle}>₹ {gstAmount || 'N/A'}</span>
+                </div>
+                <div className="mb-1" style={{ display: "flex", gap: "10px" }}>
+                  <span style={labelStyle}>Grand Total: </span>
+                  {/* <span style={valueStyle}>₹ {grandTotal}</span> */}
+                  <span style={valueStyle}>₹ {order?.GrandTotal || "N/A"}</span>
+                </div>
+                {/* )} */}
+
+
 
                 {/* <div
                   className="mb-1"
