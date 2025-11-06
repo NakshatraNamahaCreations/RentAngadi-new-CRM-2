@@ -5,3 +5,32 @@ body {
 }
 
 
+/* ===== PERFECT PDF PAGE BREAKS FOR TABLES ===== */
+.no-split-row {
+  page-break-inside: avoid !important;
+  page-break-after: auto !important;
+}
+
+.force-page-break {
+  page-break-before: always !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+#productsTable thead {
+  display: table-header-group !important;
+}
+
+#productsTable tr {
+  page-break-inside: avoid;
+}
+
+/* Ensure container fits A4 */
+@media screen {
+  .container > div[ref] {
+    max-width: 210mm;
+    margin: 0 auto;
+  }
+}
