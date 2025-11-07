@@ -179,21 +179,30 @@ const QuotationInvoice = () => {
     new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
   const money = (n) => `INR ${fmtIN(n)}`; // ✅ no font needed
 
-  async function compressImageToBase64(url, size = 80, quality = 0.6) {
+  async function compressImageToBase64(url, maxSize = 500, quality = 1) {
     try {
-      const blob = await fetch(url, { mode: "cors" }).then((r) => r.blob());
-      const bmp = await createImageBitmap(blob, {
-        resizeWidth: size,
-        resizeHeight: size,
-        resizeQuality: "high",
+      const res = await fetch(url);
+      const blob = await res.blob();
+
+      const img = new Image();
+      img.src = URL.createObjectURL(blob);
+
+      return await new Promise((resolve) => {
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+
+          const scale = maxSize / Math.max(img.width, img.height);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
       });
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(bmp, 0, 0, size, size);
-      return canvas.toDataURL("image/jpeg", quality);
-    } catch {
+    } catch (err) {
+      console.log("compress failed", err);
       return null;
     }
   }
@@ -262,7 +271,7 @@ const QuotationInvoice = () => {
       const rows = await Promise.all(
         items.map(async (p, i) => {
           const url = p.ProductIcon ? `${ImageApiURL}/product/${p.ProductIcon}` : null;
-          const img64 = url ? await compressImageToBase64(url, 80, 0.6) : null;
+          const img64 = url ? await compressImageToBase64(url, 300, 0.9) : null;
           return [
             i + 1,
             p.productName,
@@ -276,36 +285,70 @@ const QuotationInvoice = () => {
         })
       );
 
+      // ---- PRODUCTS TABLE (FULL UPDATED) ----
+
+
       autoTable(doc, {
         head: [["#", "Product", "Slot", "Image", "Price", "Qty", "Days", "Amount"]],
         body: rows,
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
-        tableWidth: "wrap",
-        headStyles: { fillColor: [47, 117, 181], textColor: 255 },
-        styles: { fontSize: 8, cellPadding: 3, valign: "middle", overflow: "linebreak" },
-        columnStyles: {
-          0: { cellWidth: 25, halign: "center" },     // S.No
-          1: { cellWidth: 140 },                      // Product Name
-          2: { cellWidth: 95 },                       // Slot
-          3: { cellWidth: 60, halign: "center" },     // Image
-          4: { cellWidth: 60, halign: "right" },      // Price
-          5: { cellWidth: 35, halign: "center" },     // Qty
-          6: { cellWidth: 35, halign: "center" },     // Days
-          7: { cellWidth: 70, halign: "right" },      // Amount
+      
+        // ✅ FINAL PERFECT WIDTH + LEFT ALIGNMENT
+        tableWidth: usableWidth - 40,
+        margin: { 
+          left: margins.left - 6,   // ✅ moved left slightly more
+          right: margins.right + 46 
         },
-
-        didParseCell: (data) => {
-          if (data.column.index === 3 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image"))
+      
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+          valign: "middle"
+        },
+      
+        didParseCell(data) {
+          if (data.row.section === "body") {
+            data.cell.styles.minCellHeight = 65;
+          }
+          if (data.column.index === 3) {
             data.cell.text = "";
-        },
-        didDrawCell: (data) => {
-          if (data.column.index === 3 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image")) {
-            const img = data.cell.raw;
-            const { x, y } = data.cell;
-            doc.addImage(img, "JPEG", x + 6, y + 3, 25, 25);
           }
         },
+      
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 140 },
+          2: { cellWidth: 95 },
+          3: { cellWidth: 65, halign: "center" },
+          4: { cellWidth: 60 },
+          5: { cellWidth: 35 },
+          6: { cellWidth: 35 },
+          7: { cellWidth: 70 }
+        },
+      
+        didDrawCell(data) {
+          if (
+            data.column.index === 3 &&
+            data.row.section === "body" &&
+            typeof data.cell.raw === "string" &&
+            data.cell.raw.startsWith("data:image")
+          ) {
+            const img = data.cell.raw;
+      
+            const cellX = data.cell.x;
+            const cellY = data.cell.y;
+            const cellW = data.cell.width;
+            const cellH = 65;
+      
+            const imgSize = 50;
+      
+            const x = cellX + (cellW - imgSize) / 2;
+            const y = cellY + (cellH - imgSize) / 2;
+      
+            doc.addImage(img, "JPEG", x, y, imgSize, imgSize);
+          }
+        }
       });
 
       // ---- Summary ----
