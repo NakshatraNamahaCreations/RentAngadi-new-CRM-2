@@ -2,30 +2,57 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { ApiURL, ImageApiURL } from "../../api";
-import { Button } from "react-bootstrap";
+import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import axios from 'axios';
+import QuotationDetails from "./QuotationDetails";
 import { safeNumber } from "../../utils/numberUtils";
 import { parseDate } from "../../utils/parseDates";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const QuotationInvoice = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const invoiceRef = useRef();
-  const { id } = useParams();
+  const { id } = useParams(); // ✅ get quotation ID from URL
 
   const [quotation, setQuotation] = useState({});
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+
+
+  // const quotation = location.state?.quotation;
+  // quotation.discount = 0
+  // const items = location.state?.items || [];
+  // const items = quotation?.slots[0]?.Products
+  const productDates = location.state?.productDates || {};
+
+  // console.clear();
+  // console.log(`quotation from state: `, quotation);
+  // console.log(`items from state: `, items);
+
+  // if (!quotation) {
+  //   return (
+  //     <div className="container my-5">
+  //       <h3>No Quotation Data Provided</h3>
+  //       <button className="btn btn-primary" onClick={() => navigate(-1)}>
+  //         Go Back
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   useEffect(() => {
     const fetchQuotation = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`${ApiURL}/quotations/getquotation/${id}`);
-        console.clear();
+        console.clear()
         console.log(`Fetched quote: `, res.data.quoteData);
         const quoteData = res.data.quoteData;
 
+        // Calculate days and total for each product
         const enrichedItems = (quoteData.slots?.[0]?.Products || []).map(prod => {
           const start = parseDate(prod.productQuoteDate || quoteData.quoteDate);
           const end = parseDate(prod.productEndDate || quoteData.endDate);
@@ -48,7 +75,9 @@ const QuotationInvoice = () => {
           };
         });
 
-        quoteData.slots[0].Products = enrichedItems;
+        quoteData.slots[0].Products = enrichedItems
+
+        console.log(`quotation slots[0] prods `, quoteData.slots[0].Products);
 
         const productsTotal = enrichedItems.reduce(
           (sum, item) => sum + ((item.pricePerUnit || 0) * (item.quantity || 0) * (item.days || 1)),
@@ -59,14 +88,19 @@ const QuotationInvoice = () => {
         const discountPercent = Number(quoteData.discount || 0);
         const gstPercent = Number(quoteData.GST || 0);
 
+        // Calculate totals in the new order
         const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
         const afterDiscount = productsTotal - discountAmt;
         const totalWithCharges = afterDiscount + transport + manpower;
+
         const allSubTotal = totalWithCharges + safeNumber(quoteData?.refurbishment);
         const gstAmt = gstPercent ? (gstPercent / 100 * allSubTotal) : 0;
+        // const finalTotal = Math.round(allSubTotal + gstAmt);
         const finalTotal = allSubTotal + gstAmt;
 
-        const enrichedQuote = ({ ...quoteData, allProductsTotal: productsTotal, discountAmt, afterDiscount, totalWithCharges, allSubTotal, gstAmt, finalTotal });
+        const enrichedQuote = ({ ...quoteData, allProductsTotal: productsTotal, discountAmt, afterDiscount, totalWithCharges, allSubTotal, gstAmt, finalTotal })
+
+        console.log({ allProductsTotal: productsTotal, discountAmt, afterDiscount, totalWithCharges, gstAmt, finalTotal, gstPercent });
 
         setQuotation(enrichedQuote);
         setItems(enrichedItems);
@@ -81,17 +115,256 @@ const QuotationInvoice = () => {
     fetchQuotation();
   }, [id]);
 
-  if (loading) return <div className="container my-5"><h4>Loading Quotation Invoice...</h4></div>;
-  if (!quotation) return <div className="container my-5"><h4>No quotation found</h4><Button onClick={() => navigate(-1)}>Go Back</Button></div>;
+
+  // ✅ Early return for loading or missing data
+  if (loading)
+    return (
+      <div className="container my-5">
+        <h4>Loading Quotation Invoice...</h4>
+      </div>
+    );
+
+  if (!quotation)
+    return (
+      <div className="container my-5">
+        <h4>No quotation found</h4>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      </div>
+    );
+
+
+
+  // // Calculate products total
+  // // const productsTotal = items.reduce((sum, item) => sum + (item.amount * item.days || 0), 0);
+  // const productsTotal = items.reduce(
+  //   (sum, item) => sum + ((item.pricePerUnit || 0) * (item.quantity || 0) * (item.days || 1)),
+  //   0
+  // );
+  // console.log(`productsTotal: `, productsTotal);
+
+  // const transport = Number(quotation.transportcharge || 0);
+  // const manpower = Number(quotation.labourecharge || 0);
+  // const discountPercent = Number(quotation.discount || 0);
+  // const gstPercent = Number(quotation.GST || 0);
+
+  // // Calculate totals in the new order
+  // const discountAmt = discountPercent ? (discountPercent / 100 * productsTotal) : 0;
+  // const afterDiscount = productsTotal - discountAmt;
+  // const totalWithCharges = afterDiscount + transport + manpower;
+  // const allSubTotal = totalWithCharges + quotation?.refurbishment;
+  // const gstAmt = gstPercent ? (gstPercent / 100 * allSubTotal) : 0;
+  // const finalTotal = Math.round(totalWithCharges + gstAmt);
 
   const makeSafe = (val, fallback = "NA") => {
     if (!val && val !== 0) return fallback;
-    return String(val).trim().replace(/[\/\\?%*:|"<>]/g, "").replace(/\s+/g, "_").slice(0, 120) || fallback;
+    return String(val)
+      .trim()
+      .replace(/[\/\\?%*:|"<>]/g, "")
+      .replace(/\s+/g, "_")
+      .slice(0, 120) || fallback;
   };
 
+  // build filename from an array of parts and return with extension
   const buildFilename = (parts = [], ext = "pdf") => {
     const name = parts.map((p) => makeSafe(p)).join("-").replace(/_+/g, "_");
     return `${name}.${ext}`;
+  };
+
+  // =====================
+  // Helpers
+  // =====================
+
+  // ---------- Helpers ----------
+  const fmtIN = (n) =>
+    new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
+  const money = (n) => `INR ${fmtIN(n)}`; // ✅ no font needed
+
+  async function compressImageToBase64(url, size = 80, quality = 0.6) {
+    try {
+      const blob = await fetch(url, { mode: "cors" }).then((r) => r.blob());
+      const bmp = await createImageBitmap(blob, {
+        resizeWidth: size,
+        resizeHeight: size,
+        resizeQuality: "high",
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bmp, 0, 0, size, size);
+      return canvas.toDataURL("image/jpeg", quality);
+    } catch {
+      return null;
+    }
+  }
+
+  function addFooter(doc) {
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      const w = doc.internal.pageSize.getWidth();
+      const h = doc.internal.pageSize.getHeight();
+      doc.setFontSize(8);
+      // doc.text(`Page ${i} of ${pages} • Generated by Rent Angadi`, w - 180, h - 12);
+    }
+  }
+
+  // ---------- PDF Generator ----------
+  const handleDownloadPDF = async () => {
+    try {
+      const doc = new jsPDF("p", "pt", "a4");
+      const pageWidth = doc.internal.pageSize.getWidth(); // ✅ define here
+      const margins = { left: 40, right: 40 };
+      const usableWidth = pageWidth - margins.left - margins.right;
+      let y = 40;
+
+      // Title
+      doc.setFontSize(16);
+      doc.text("Quotation", pageWidth / 2, y, { align: "center" });
+      y += 25;
+
+      // ---- Header (Two-column full-width layout) ----
+      const colWidths = [
+        usableWidth * 0.22, // Label 1
+        usableWidth * 0.28, // Value 1
+        usableWidth * 0.22, // Label 2
+        usableWidth * 0.28, // Value 2
+      ];
+
+      autoTable(doc, {
+        body: [
+          ["Company Name", quotation.clientName || "—", "Client Name", quotation.executivename || "—"],
+          ["Slot", quotation.quoteTime || "—", "Venue", quotation.address || "—"],
+          ["Delivery Date", quotation.quoteDate || "—", "Dismantle Date", quotation.endDate || "—"],
+          ["Incharge Name", quotation.inchargeName || "N/A", "Rent Angadi Point of Contact", quotation.inchargePhone || "N/A"],
+        ],
+        startY: y,
+        theme: "grid",
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+          valign: "middle",
+          lineColor: [180, 180, 180],
+        },
+        head: [],
+        margin: margins,
+        tableWidth: usableWidth,
+        columnStyles: {
+          0: { cellWidth: colWidths[0], fontStyle: "bold" },
+          1: { cellWidth: colWidths[1] },
+          2: { cellWidth: colWidths[2], fontStyle: "bold" },
+          3: { cellWidth: colWidths[3] },
+        },
+      });
+
+
+      // ---- Images + Products ----
+      const rows = await Promise.all(
+        items.map(async (p, i) => {
+          const url = p.ProductIcon ? `${ImageApiURL}/product/${p.ProductIcon}` : null;
+          const img64 = url ? await compressImageToBase64(url, 80, 0.6) : null;
+          return [
+            i + 1,
+            p.productName,
+            p.productSlot || quotation.quoteTime,
+            img64,
+            money(p.pricePerUnit || 0),
+            p.quantity,
+            p.days,
+            money((p.pricePerUnit || 0) * (p.quantity || 0) * (p.days || 1)),
+          ];
+        })
+      );
+
+      autoTable(doc, {
+        head: [["#", "Product", "Slot", "Image", "Price", "Qty", "Days", "Amount"]],
+        body: rows,
+        startY: doc.lastAutoTable.finalY + 20,
+        theme: "grid",
+        tableWidth: "wrap",
+        headStyles: { fillColor: [47, 117, 181], textColor: 255 },
+        styles: { fontSize: 8, cellPadding: 3, valign: "middle", overflow: "linebreak" },
+        columnStyles: {
+          0: { cellWidth: 25, halign: "center" },     // S.No
+          1: { cellWidth: 140 },                      // Product Name
+          2: { cellWidth: 95 },                       // Slot
+          3: { cellWidth: 60, halign: "center" },     // Image
+          4: { cellWidth: 60, halign: "right" },      // Price
+          5: { cellWidth: 35, halign: "center" },     // Qty
+          6: { cellWidth: 35, halign: "center" },     // Days
+          7: { cellWidth: 70, halign: "right" },      // Amount
+        },
+
+        didParseCell: (data) => {
+          if (data.column.index === 3 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image"))
+            data.cell.text = "";
+        },
+        didDrawCell: (data) => {
+          if (data.column.index === 3 && typeof data.cell.raw === "string" && data.cell.raw.startsWith("data:image")) {
+            const img = data.cell.raw;
+            const { x, y } = data.cell;
+            doc.addImage(img, "JPEG", x + 6, y + 3, 25, 25);
+          }
+        },
+      });
+
+      // ---- Summary ----
+      const S = (v) => money(v ?? 0);
+      autoTable(doc, {
+        head: [["Description", "Amount"]],
+        body: [
+          ["Total Amount", S(quotation.allProductsTotal)],
+          ...(quotation.discount ? [["Discount", `-${S(quotation.discountAmt)}`]] : []),
+          ["Transportation", S(quotation.transportcharge)],
+          ["Manpower", S(quotation.labourecharge)],
+          ["Reupholstery", S(quotation.refurbishment || 0)],
+          ["Sub Total", S(quotation.allSubTotal)],
+          ...(quotation.GST ? [[`GST (${quotation.GST}%)`, S(quotation.gstAmt)]] : []),
+          ["Grand Total", S(quotation.finalTotal)],
+        ],
+        startY: doc.lastAutoTable.finalY + 20,
+        theme: "grid",
+        headStyles: { fillColor: [34, 153, 84], textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: { 1: { halign: "right" } },
+      });
+
+      // ---- Notes ----
+      const noteY = doc.lastAutoTable.finalY + 35;
+      doc.setFontSize(10);
+      doc.text("Notes:", 40, noteY);
+
+      const notes = [
+        "1. Additional elements would be charged on actuals, transportation would be additional.",
+        "2. 100% Payment for confirmation of event.",
+        "3. Costing is merely for estimation purposes. Requirements are blocked post payment in full.",
+        "4. If inventory is not reserved with payments, we are not committed to keep it.",
+        "5. The nature of the rental industry that our furniture is frequently moved and transported, which can lead to scratches on glass, minor chipping of paintwork, & minor stains etc. We ask you to visit the warehouse to inspect blocked furniture if you wish."
+      ];
+
+      const wrapWidth = 500; // pixels — fits inside A4 with left margin 40
+      let currentY = noteY + 15;
+
+      notes.forEach((line) => {
+        const split = doc.splitTextToSize(line, wrapWidth);
+        doc.text(split, 60, currentY);
+        currentY += split.length * 12; // add spacing based on wrapped lines
+      });
+
+
+      addFooter(doc);
+
+      const filename = buildFilename([
+        formatDateToMonthName(quotation.quoteDate),
+        formatDateToMonthName(quotation.endDate),
+        quotation?.executivename,
+        quotation?.address,
+        quotation?.clientName,
+      ])
+      doc.save(filename);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    }
   };
 
   const formatDateToMonthName = (dateString) => {
@@ -101,166 +374,90 @@ const QuotationInvoice = () => {
     return `${day} ${months[month - 1].slice(0, 3)} `;
   };
 
-  // ONLY CHANGE: PERFECT PDF WITH NO CUT ROWS
-  const handleDownloadPDF = async () => {
-    const element = invoiceRef.current;
-
-    await Promise.all(
-      Array.from(element.querySelectorAll("img")).map(img =>
-        img.complete ? null : new Promise(r => { img.onload = r; img.onerror = r; })
-      )
-    );
-
-    const table = element.querySelector("#productsTable");
-    const tbody = table?.querySelector("tbody");
-    const rows = Array.from(tbody?.querySelectorAll("tr") || []);
-    const breakers = [];
-    let heightUsed = 0;
-    const pageLimit = 1050; // A4 safe height in pixels
-
-    rows.forEach((row, i) => {
-      if (i === 0) return;
-      const h = row.offsetHeight || 65;
-      heightUsed += h;
-      if (heightUsed > pageLimit) {
-        const breaker = document.createElement("tr");
-        breaker.className = "pdf-break";
-        breaker.innerHTML = `<td colspan="8" style="padding:0; border:none; height:0;"></td>`;
-        tbody.insertBefore(breaker, row);
-        breakers.push(breaker);
-        heightUsed = h;
-      }
-    });
-
-    await new Promise(r => setTimeout(r, 100));
-
-    const filename = buildFilename([
-      formatDateToMonthName(quotation.quoteDate),
-      formatDateToMonthName(quotation.endDate),
-      quotation?.executivename,
-      quotation?.address,
-      quotation?.clientName,
-    ]);
-
-    const options = {
-      margin: [5, 5, 5, 5],
-      filename,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
-    html2pdf().set(options).from(element).save().then(() => {
-      breakers.forEach(b => b.remove());
-    });
-  };
-
   return (
-    <>
-      {/* YOUR ORIGINAL BUTTON - VISIBLE & WORKING */}
-      <div style={{ textAlign: 'right', padding: '10px 24px 0 0', background: '#f8f9fa' }}>
-        <Button
-          onClick={handleDownloadPDF}
-          variant="success"
-          size="lg"
-          style={{ fontWeight: '600' }}
-        >
-          Download Quotation
-        </Button>
-      </div>
-
-      {/* YOUR ORIGINAL INVOICE - 100% UNCHANGED + ID + CLASS */}
-      <div
-        ref={invoiceRef}
-        style={{
-          background: "#fff",
-          padding: 24,
-          borderRadius: 0,
-          fontFamily: "Arial, sans-serif",
-          margin: "20px auto",
-          maxWidth: "900px",
-          boxShadow: "0 0 20px rgba(0,0,0,0.1)"
-        }}
+    <div className="container my-5">
+      <Button
+        onClick={handleDownloadPDF}
+        variant="success"
+        className="my-1 d-flex ms-auto" // ms-auto will push the button to the right
       >
+        Download Quotation
+      </Button>
+      <div className="no-print" ref={invoiceRef} style={{ background: "#fff", padding: 24, borderRadius: 0, fontFamily: "Arial, sans-serif" }}>
         <h2 style={{ fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Quotation</h2>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
           <tbody>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.executivename}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Company Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.clientName}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Client Name</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.executivename}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteTime}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.address}</td>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Occasion</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.occasion}</td> */}
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Slot</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteTime}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Venue</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.address}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteDate}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.endDate}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Delivery Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.quoteDate}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Dismantle Date</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.endDate}</td>
             </tr>
             <tr>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargeName || "N/A"}</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Rent Angadi Point of Contact</td>
-              <td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargePhone || "N/A"}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>InchargeName</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargeName || "N/A"}</td>
+              <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Rent Angadi Point of Contact</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.inchargePhone || "N/A"}</td>
+            </tr>
+            <tr>
+              {/* <td style={{ border: '1px solid #ccc', padding: '6px', fontWeight: 600 }}>Additional Logistics Support</td><td style={{ border: '1px solid #ccc', padding: '6px' }}>{quotation.additionalLogisticsSupport}</td> */}
             </tr>
           </tbody>
         </table>
 
-        <table id="productsTable" style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '11.5px' }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
           <thead style={{ backgroundColor: '#2F75B5', color: '#fff' }}>
             <tr>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "35px" }}>S.No</th>
-              <th style={{ border: "1px solid #666", padding: "6px" }}>Product Name</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "110px" }}>Slot</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "60px" }}>Image</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "70px", textAlign: "right" }}>Price per Unit</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "45px" }}>No of units</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "45px" }}>No of days</th>
-              <th style={{ border: "1px solid #666", padding: "6px", width: "85px", textAlign: "right" }}>Amount</th>
+              <th style={{ border: "1px solid #666", padding: 8, width: '50px' }}>S.No</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>Product Name</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>Slot</th>
+              <th style={{ border: "1px solid #666", padding: 8, width: '80px' }}>Image</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>Price per Unit</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>No of units</th>
+              <th style={{ border: "1px solid #666", padding: 8 }}>No of days</th>
+              <th style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>Amount</th>
             </tr>
           </thead>
           <tbody>
             {items.map((product, idx) => (
-              <tr key={idx} className="no-split-row">
-                <td style={{ border: "1px solid #666", padding: "6px", textAlign: "center" }}>{idx + 1}</td>
-                <td style={{ border: "1px solid #666", padding: "6px" }}>{product.productName}</td>
-                <td style={{ border: "1px solid #666", padding: "6px", fontSize: "10px" }}>{product.productSlot || quotation?.quoteTime}</td>
-                <td style={{ border: "1px solid #666", padding: "4px", textAlign: "center" }}>
+              <tr key={idx}>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{idx + 1}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productName}</td>
+                {/* <td style={{ border: "1px solid #666", padding: 8 }}>{productDates[product.productId]?.productSlot || quotation?.quoteTime}</td> */}
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.productSlot || quotation?.quoteTime}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>
                   {product.ProductIcon && (
                     <img
                       src={`${ImageApiURL}/product/${product.ProductIcon}`}
                       alt={product.productName}
-                      style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+                      style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                     />
                   )}
                 </td>
-                <td style={{ border: "1px solid #666", padding: "6px", textAlign: "right" }}>₹{Number(product.price).toLocaleString()}</td>
-                <td style={{ border: "1px solid #666", padding: "6px", textAlign: "center" }}>{product.quantity}</td>
-                <td style={{ border: "1px solid #666", padding: "6px", textAlign: "center" }}>{product.days}</td>
-                <td style={{ border: "1px solid #666", padding: "6px", textAlign: "right" }}>
-                  ₹{(product.pricePerUnit * product.quantity * product.days).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </td>
+                {/* {console.log(`${idx} product: `, product)} */}
+                {/* {console.log(`"${ImageApiURL}/product/${product.ProductIcon}"`)} */}
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.price}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.quantity}</td>
+                <td style={{ border: "1px solid #666", padding: 8 }}>{product.days}</td>
+                <td style={{ border: "1px solid #666", padding: 8, textAlign: "right" }}>{product.pricePerUnit * product.quantity * product.days}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* YOUR ORIGINAL TOTALS - 100% SAME */}
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
           <tbody>
             <tr>
-              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>
-                {quotation?.discount != 0 ? "Total Amount before discount" : "Total amount"}
-              </td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>{quotation?.discount != 0 ? "Total Amount before discount" : "Total amount"}</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                {console.log(`quotation?.allProductsTotal: `, quotation?.allProductsTotal)}
+                {/* ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })} */}
                 ₹{quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </td>
             </tr>
@@ -272,14 +469,12 @@ const QuotationInvoice = () => {
                 </td>
               </tr>
             )}
-            {quotation?.discount != 0 && (
-              <tr>
-                <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Total Amount After Discount</td>
-                <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  ₹{quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </td>
-              </tr>
-            )}
+            {quotation?.discount != 0 && (<tr>
+              <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Total Amount After Discount</td>
+              <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
+                ₹{quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </td>
+            </tr>)}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Transportation</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
@@ -321,8 +516,7 @@ const QuotationInvoice = () => {
           </tbody>
         </table>
 
-        {/* <div style={{ fontSize: "11px", marginTop: 30 }}> */}
-        <div className="notes-section" style={{ fontSize: "11px", marginTop: 30 }}>
+        <div style={{ fontSize: "11px", marginTop: 30 }}>
           <strong>Note:</strong>
           <ol style={{ paddingLeft: 16 }}>
             <li>Additional elements would be charged on actuals, transportation would be additional.</li>
@@ -332,8 +526,12 @@ const QuotationInvoice = () => {
             <li><strong>The nature of the rental industry that our furniture is frequently moved and transported, which can lead to scratches on glass, minor chipping of paintwork, & minor stains etc. We ask you to visit the warehouse to inspect blocked furniture if you wish.</strong></li>
           </ol>
         </div>
+
+        {/* <div style={{ textAlign: 'right', marginTop: 20 }}> */}
+        {/* <button className="btn btn-primary" onClick={handleDownloadPDF}>Download PDF</button> */}
+        {/* </div> */}
       </div>
-    </>
+    </div>
   );
 };
 
