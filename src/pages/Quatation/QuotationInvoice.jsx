@@ -10,6 +10,8 @@ import { parseDate } from "../../utils/parseDates";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const BRAND = [189, 85, 37]; // #BD5525
+
 const QuotationInvoice = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -293,20 +295,27 @@ const QuotationInvoice = () => {
         body: rows,
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
-      
+
         // ✅ FINAL PERFECT WIDTH + LEFT ALIGNMENT
         tableWidth: usableWidth - 40,
-        margin: { 
+        margin: {
           left: margins.left - 6,   // ✅ moved left slightly more
-          right: margins.right + 46 
+          right: margins.right + 46
         },
-      
+
         styles: {
           fontSize: 9,
           cellPadding: 3,
-          valign: "middle"
+          valign: "middle",
+          lineColor: BRAND,         // ✅ only borders are orange
+          textColor: 0              // ✅ body text stays BLACK
         },
-      
+
+        headStyles: {
+          fillColor: BRAND,         // ✅ header background orange
+          textColor: 255            // ✅ header text WHITE
+        },
+
         didParseCell(data) {
           if (data.row.section === "body") {
             data.cell.styles.minCellHeight = 65;
@@ -315,7 +324,7 @@ const QuotationInvoice = () => {
             data.cell.text = "";
           }
         },
-      
+
         columnStyles: {
           0: { cellWidth: 25 },
           1: { cellWidth: 140 },
@@ -326,7 +335,7 @@ const QuotationInvoice = () => {
           6: { cellWidth: 35 },
           7: { cellWidth: 70 }
         },
-      
+
         didDrawCell(data) {
           if (
             data.column.index === 3 &&
@@ -335,17 +344,17 @@ const QuotationInvoice = () => {
             data.cell.raw.startsWith("data:image")
           ) {
             const img = data.cell.raw;
-      
+
             const cellX = data.cell.x;
             const cellY = data.cell.y;
             const cellW = data.cell.width;
             const cellH = 65;
-      
+
             const imgSize = 50;
-      
+
             const x = cellX + (cellW - imgSize) / 2;
             const y = cellY + (cellH - imgSize) / 2;
-      
+
             doc.addImage(img, "JPEG", x, y, imgSize, imgSize);
           }
         }
@@ -367,13 +376,37 @@ const QuotationInvoice = () => {
         ],
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
-        headStyles: { fillColor: [34, 153, 84], textColor: 255 },
-        styles: { fontSize: 9, cellPadding: 4 },
-        columnStyles: { 1: { halign: "right" } },
+        // ✅ GLOBAL STYLE (text stays black, border orange)
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+          lineColor: BRAND,   // ✅ Border = orange
+          textColor: 0        // ✅ Body text = black
+        },
+
+        // ✅ Header styling (background = orange, text = white)
+        headStyles: {
+          fillColor: BRAND,
+          textColor: 255
+        },
+
+        // ✅ Align Amount column right
+        columnStyles: {
+          1: { halign: "right" }
+        }
       });
 
       // ---- Notes ----
-      const noteY = doc.lastAutoTable.finalY + 35;
+      let noteY = doc.lastAutoTable.finalY + 35;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const requiredHeight = 5 * 15 + 40; // 5 notes, each ~15px height + margin
+
+      // ✅ If notes overflow → add a new page
+      if (noteY + requiredHeight > pageHeight - 40) {
+        doc.addPage();
+        noteY = 40;
+      }
+
       doc.setFontSize(10);
       doc.text("Notes:", 40, noteY);
 
