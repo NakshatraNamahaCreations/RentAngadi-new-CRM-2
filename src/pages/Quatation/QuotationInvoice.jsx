@@ -5,7 +5,7 @@ import { ApiURL, ImageApiURL } from "../../api";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import axios from 'axios';
 import QuotationDetails from "./QuotationDetails";
-import { safeNumber } from "../../utils/numberUtils";
+import { fmt, safeNumber } from "../../utils/numberUtils";
 import { parseDate } from "../../utils/parseDates";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -79,7 +79,7 @@ const QuotationInvoice = () => {
 
         quoteData.slots[0].Products = enrichedItems
 
-        console.log(`quotation slots[0] prods `, quoteData.slots[0].Products);
+        // console.log(`quotation slots[0] prods `, quoteData.slots[0].Products);
 
         const productsTotal = enrichedItems.reduce(
           (sum, item) => sum + ((item.pricePerUnit || 0) * (item.quantity || 0) * (item.days || 1)),
@@ -287,8 +287,41 @@ const QuotationInvoice = () => {
         })
       );
 
-      // ---- PRODUCTS TABLE (FULL UPDATED) ----
+      function ensureSpaceForRow(doc, rowHeight = 80) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const bottomMargin = 50;
 
+        const safeY = doc.lastAutoTable
+          ? doc.lastAutoTable.finalY
+          : 80;
+
+        if (safeY + rowHeight > pageHeight - bottomMargin) {
+          doc.addPage();
+          return 40; // new Y for next table
+        }
+
+        return safeY + 20;
+      }
+      // const startY = ensureSpaceForRow(doc, 80);
+
+
+      function forcePageBreakBeforeRow(doc, rowHeight = 85) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const bottomMargin = 40;
+
+        const y = doc.lastAutoTable ? doc.lastAutoTable.finalY : 60;
+
+        if (y + rowHeight > pageHeight - bottomMargin) {
+          doc.addPage();
+          return 40;
+        }
+
+        return y + 10;
+      }
+      const startY = forcePageBreakBeforeRow(doc, 85);
+
+
+      // ---- PRODUCTS TABLE (FULL UPDATED) ----
 
       autoTable(doc, {
         head: [["#", "Product", "Slot", "Image", "Price", "Qty", "Days", "Amount"]],
@@ -296,30 +329,29 @@ const QuotationInvoice = () => {
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
 
-        // ✅ FINAL PERFECT WIDTH + LEFT ALIGNMENT
-        tableWidth: usableWidth - 40,
-        margin: {
-          left: margins.left - 6,   // ✅ moved left slightly more
-          right: margins.right + 46
-        },
+        rowPageBreak: 'avoid',
+        pageBreak: 'auto',
 
         styles: {
           fontSize: 9,
           cellPadding: 3,
-          valign: "middle",
-          lineColor: BRAND,         // ✅ only borders are orange
-          textColor: 0              // ✅ body text stays BLACK
+          lineColor: BRAND,
+          textColor: 0
         },
 
         headStyles: {
-          fillColor: BRAND,         // ✅ header background orange
-          textColor: 255            // ✅ header text WHITE
+          fillColor: BRAND,
+          textColor: 255,
+          minCellHeight: 24         // ✅ header height correct
         },
 
         didParseCell(data) {
+          // ✅ Apply tall row only to body rows
           if (data.row.section === "body") {
-            data.cell.styles.minCellHeight = 65;
+            data.cell.styles.minCellHeight = 70;
           }
+
+          // ✅ remove text inside image cell
           if (data.column.index === 3) {
             data.cell.text = "";
           }
@@ -338,8 +370,8 @@ const QuotationInvoice = () => {
 
         didDrawCell(data) {
           if (
-            data.column.index === 3 &&
             data.row.section === "body" &&
+            data.column.index === 3 &&
             typeof data.cell.raw === "string" &&
             data.cell.raw.startsWith("data:image")
           ) {
@@ -348,7 +380,7 @@ const QuotationInvoice = () => {
             const cellX = data.cell.x;
             const cellY = data.cell.y;
             const cellW = data.cell.width;
-            const cellH = 65;
+            const cellH = data.cell.height;
 
             const imgSize = 50;
 
@@ -360,20 +392,49 @@ const QuotationInvoice = () => {
         }
       });
 
+
       // ---- Summary ----
       const S = (v) => money(v ?? 0);
+
+      const summaryRows = [];
+
+      // ✅ CASE 1: Discount exists
+      if (quotation.discount && Number(quotation.discount) !== 0) {
+        summaryRows.push(
+          ["Total Amount before discount", S(quotation.allProductsTotal)],
+          [`Discount (${quotation.discount}%)`, `-${S(quotation.discountAmt)}`],
+          ["Total Amount After Discount", S(quotation.afterDiscount)]
+        );
+      }
+
+      // ✅ CASE 2: No discount → Only show Total Amount
+      else {
+        summaryRows.push(
+          ["Total Amount", S(quotation.allProductsTotal)]
+        );
+      }
+
+      // ✅ Common rows
+      summaryRows.push(
+        ["Transportation", S(quotation.transportcharge)],
+        ["Manpower", S(quotation.labourecharge)],
+        ["Reupholstery", S(quotation.refurbishment || 0)],
+        ["Sub Total", S(quotation.allSubTotal)]
+      );
+
+      // ✅ GST only if >0
+      if (quotation.GST && Number(quotation.GST) > 0) {
+        summaryRows.push([`GST (${quotation.GST}%)`, S(quotation.gstAmt)]);
+      }
+
+      // ✅ Final row
+      summaryRows.push(
+        ["Grand Total", S(quotation.finalTotal)]
+      );
+
       autoTable(doc, {
         head: [["Description", "Amount"]],
-        body: [
-          ["Total Amount", S(quotation.allProductsTotal)],
-          ...(quotation.discount ? [["Discount", `-${S(quotation.discountAmt)}`]] : []),
-          ["Transportation", S(quotation.transportcharge)],
-          ["Manpower", S(quotation.labourecharge)],
-          ["Reupholstery", S(quotation.refurbishment || 0)],
-          ["Sub Total", S(quotation.allSubTotal)],
-          ...(quotation.GST ? [[`GST (${quotation.GST}%)`, S(quotation.gstAmt)]] : []),
-          ["Grand Total", S(quotation.finalTotal)],
-        ],
+        body: summaryRows,
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
         // ✅ GLOBAL STYLE (text stays black, border orange)
@@ -534,59 +595,59 @@ const QuotationInvoice = () => {
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
                 {console.log(`quotation?.allProductsTotal: `, quotation?.allProductsTotal)}
                 {/* ₹{quotation?.discount != 0 ? quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 }) : productsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })} */}
-                ₹{quotation?.allProductsTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.allProductsTotal)}
               </td>
             </tr>
             {quotation?.discount != 0 && (
               <tr>
                 <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Discount ({quotation?.discount}%)</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  -₹{quotation?.discountAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  -₹{fmt(quotation?.discountAmt)}
                 </td>
               </tr>
             )}
             {quotation?.discount != 0 && (<tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Total Amount After Discount</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.afterDiscount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.afterDiscount)}
               </td>
             </tr>)}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Transportation</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.transportcharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.transportcharge)}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Manpower Charge</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{quotation?.labourecharge?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.labourecharge)}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Reupholestry</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{(quotation.refurbishment || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.refurbishment)}
               </td>
             </tr>
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>Sub-Total</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                ₹{(quotation.allSubTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation?.allSubTotal)}
               </td>
             </tr>
             {quotation?.GST != 0 && quotation?.GST > 0 && (
               <tr>
                 <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold" }}>GST ({quotation?.GST}%)</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right" }}>
-                  ₹{quotation?.gstAmt?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  ₹{fmt(quotation?.gstAmt)}
                 </td>
               </tr>
             )}
             <tr>
               <td style={{ border: "1px solid #ccc", padding: "8px", fontWeight: "bold", backgroundColor: "#f8f9fa" }}>Grand Total</td>
               <td style={{ border: "1px solid #ccc", padding: "8px", textAlign: "right", backgroundColor: "#f8f9fa" }}>
-                ₹{quotation?.finalTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{fmt(quotation.finalTotal)}
               </td>
             </tr>
           </tbody>

@@ -6,4 +6,7 @@ const safeNumber = (value, defaultValue = 0) => {
 	return isNaN(num) ? defaultValue : num;
 }
 
-export { safeNumber }
+const fmt = (v) => Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+
+export { fmt, safeNumber }
