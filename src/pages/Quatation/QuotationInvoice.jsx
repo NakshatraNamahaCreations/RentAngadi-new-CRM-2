@@ -549,7 +549,7 @@ const QuotationInvoice = () => {
         </table>
 
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: '13px' }}>
-          <thead style={{ backgroundColor: '#2F75B5', color: '#fff' }}>
+          <thead style={{ backgroundColor: '#BD5525', color: '#fff' }}>
             <tr>
               <th style={{ border: "1px solid #666", padding: 8, width: '50px' }}>S.No</th>
               <th style={{ border: "1px solid #666", padding: 8 }}>Product Name</th>
