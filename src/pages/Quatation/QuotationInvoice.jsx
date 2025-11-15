@@ -30,7 +30,6 @@ const QuotationInvoice = () => {
   // const items = quotation?.slots[0]?.Products
   const productDates = location.state?.productDates || {};
 
-  // console.clear();
   // console.log(`quotation from state: `, quotation);
   // console.log(`items from state: `, items);
 
@@ -50,7 +49,6 @@ const QuotationInvoice = () => {
       try {
         setLoading(true);
         const res = await axios.get(`${ApiURL}/quotations/getquotation/${id}`);
-        console.clear()
         console.log(`Fetched quote: `, res.data.quoteData);
         const quoteData = res.data.quoteData;
 
@@ -181,12 +179,13 @@ const QuotationInvoice = () => {
     new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
   const money = (n) => `INR ${fmtIN(n)}`; // ✅ no font needed
 
-  async function compressImageToBase64(url, maxSize = 500, quality = 1) {
+  async function compressImageToBase64(url, maxSize = 300, quality = 0.92) {
     try {
       const res = await fetch(url);
       const blob = await res.blob();
 
       const img = new Image();
+      img.crossOrigin = "anonymous";
       img.src = URL.createObjectURL(blob);
 
       return await new Promise((resolve) => {
@@ -200,7 +199,25 @@ const QuotationInvoice = () => {
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          resolve(canvas.toDataURL("image/jpeg", quality));
+          // 🎯 REMOVE BLACK BACKGROUND + KEEP PRODUCT
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // detect black background
+            if (r < 40 && g < 40 && b < 40) {
+              data[i + 3] = 0; // make transparent
+            }
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+
+          // 🔥 RETURN PNG WITH TRANSPARENCY
+          resolve(canvas.toDataURL("image/png"));
         };
       });
     } catch (err) {
@@ -224,22 +241,27 @@ const QuotationInvoice = () => {
   const handleDownloadPDF = async () => {
     try {
       const doc = new jsPDF("p", "pt", "a4");
-      const pageWidth = doc.internal.pageSize.getWidth(); // ✅ define here
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
       const margins = { left: 40, right: 40 };
       const usableWidth = pageWidth - margins.left - margins.right;
       let y = 40;
 
-      // Title
+      // ---------------------------
+      // TITLE
+      // ---------------------------
       doc.setFontSize(16);
       doc.text("Quotation", pageWidth / 2, y, { align: "center" });
       y += 25;
 
-      // ---- Header (Two-column full-width layout) ----
+      // ---------------------------
+      // HEADER TABLE
+      // ---------------------------
       const colWidths = [
-        usableWidth * 0.22, // Label 1
-        usableWidth * 0.28, // Value 1
-        usableWidth * 0.22, // Label 2
-        usableWidth * 0.28, // Value 2
+        usableWidth * 0.22,
+        usableWidth * 0.28,
+        usableWidth * 0.22,
+        usableWidth * 0.28,
       ];
 
       autoTable(doc, {
@@ -287,74 +309,33 @@ const QuotationInvoice = () => {
         })
       );
 
-      function ensureSpaceForRow(doc, rowHeight = 80) {
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const bottomMargin = 50;
-
-        const safeY = doc.lastAutoTable
-          ? doc.lastAutoTable.finalY
-          : 80;
-
-        if (safeY + rowHeight > pageHeight - bottomMargin) {
-          doc.addPage();
-          return 40; // new Y for next table
-        }
-
-        return safeY + 20;
-      }
-      // const startY = ensureSpaceForRow(doc, 80);
-
-
-      function forcePageBreakBeforeRow(doc, rowHeight = 85) {
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const bottomMargin = 40;
-
-        const y = doc.lastAutoTable ? doc.lastAutoTable.finalY : 60;
-
-        if (y + rowHeight > pageHeight - bottomMargin) {
-          doc.addPage();
-          return 40;
-        }
-
-        return y + 10;
-      }
-      const startY = forcePageBreakBeforeRow(doc, 85);
-
-
-      // ---- PRODUCTS TABLE (FULL UPDATED) ----
-
       autoTable(doc, {
         head: [["#", "Product", "Slot", "Image", "Price", "Qty", "Days", "Amount"]],
         body: rows,
         startY: doc.lastAutoTable.finalY + 20,
         theme: "grid",
 
-        rowPageBreak: 'avoid',
-        pageBreak: 'auto',
+        rowPageBreak: "avoid",
+        pageBreak: "auto",
 
         styles: {
           fontSize: 9,
           cellPadding: 3,
           lineColor: BRAND,
-          textColor: 0
+          textColor: 0,
         },
 
         headStyles: {
           fillColor: BRAND,
           textColor: 255,
-          minCellHeight: 24         // ✅ header height correct
+          minCellHeight: 24,
         },
 
         didParseCell(data) {
-          // ✅ Apply tall row only to body rows
           if (data.row.section === "body") {
             data.cell.styles.minCellHeight = 70;
           }
-
-          // ✅ remove text inside image cell
-          if (data.column.index === 3) {
-            data.cell.text = "";
-          }
+          if (data.column.index === 3) data.cell.text = "";
         },
 
         columnStyles: {
@@ -365,7 +346,7 @@ const QuotationInvoice = () => {
           4: { cellWidth: 60 },
           5: { cellWidth: 35 },
           6: { cellWidth: 35 },
-          7: { cellWidth: 70 }
+          7: { cellWidth: 70 },
         },
 
         didDrawCell(data) {
@@ -376,45 +357,36 @@ const QuotationInvoice = () => {
             data.cell.raw.startsWith("data:image")
           ) {
             const img = data.cell.raw;
-
             const cellX = data.cell.x;
             const cellY = data.cell.y;
             const cellW = data.cell.width;
             const cellH = data.cell.height;
-
             const imgSize = 50;
-
             const x = cellX + (cellW - imgSize) / 2;
             const y = cellY + (cellH - imgSize) / 2;
 
-            doc.addImage(img, "JPEG", x, y, imgSize, imgSize);
+            doc.addImage(img, "PNG", x, y, imgSize, imgSize);
           }
-        }
+        },
       });
 
-
-      // ---- Summary ----
+      // ---------------------------
+      // SUMMARY SECTION
+      // ---------------------------
       const S = (v) => money(v ?? 0);
-
       const summaryRows = [];
 
-      // ✅ CASE 1: Discount exists
+      // Build summary rows
       if (quotation.discount && Number(quotation.discount) !== 0) {
         summaryRows.push(
           ["Total Amount before discount", S(quotation.allProductsTotal)],
           [`Discount (${quotation.discount}%)`, `-${S(quotation.discountAmt)}`],
           ["Total Amount After Discount", S(quotation.afterDiscount)]
         );
+      } else {
+        summaryRows.push(["Total Amount", S(quotation.allProductsTotal)]);
       }
 
-      // ✅ CASE 2: No discount → Only show Total Amount
-      else {
-        summaryRows.push(
-          ["Total Amount", S(quotation.allProductsTotal)]
-        );
-      }
-
-      // ✅ Common rows
       summaryRows.push(
         ["Transportation", S(quotation.transportcharge)],
         ["Manpower", S(quotation.labourecharge)],
@@ -422,48 +394,76 @@ const QuotationInvoice = () => {
         ["Sub Total", S(quotation.allSubTotal)]
       );
 
-      // ✅ GST only if >0
       if (quotation.GST && Number(quotation.GST) > 0) {
         summaryRows.push([`GST (${quotation.GST}%)`, S(quotation.gstAmt)]);
       }
 
-      // ✅ Final row
-      summaryRows.push(
-        ["Grand Total", S(quotation.finalTotal)]
-      );
+      summaryRows.push(["Grand Total", S(quotation.finalTotal)]);
 
+      // // --------------------------------------
+      // // SAFETY: Prevent autoTable crash
+      // // --------------------------------------
+      // if (summaryRows.length === 0) {
+      //   summaryRows.push(["Grand Total", S(quotation.finalTotal)]);
+      // }
+
+      // ---------------------------
+      // SMART PAGE FIT LOGIC
+      // ---------------------------
+
+      const headerHeight = 25;
+      const rowHeight = 20;
+      const minRequired = headerHeight + rowHeight; // header + 1 row
+
+      let summaryStartY = doc.lastAutoTable.finalY + 20;
+      const bottomMargin = 40;
+
+      // If AT LEAST 1 row cannot fit → add new page
+      const canFitOneRow =
+        summaryStartY + minRequired <= pageHeight - bottomMargin;
+
+      if (!canFitOneRow) {
+        doc.addPage();
+        summaryStartY = 40; // RESET startY to top of new page
+      }
+
+      // ---------------------------
+      // RENDER SUMMARY TABLE
+      // ---------------------------
       autoTable(doc, {
         head: [["Description", "Amount"]],
         body: summaryRows,
-        startY: doc.lastAutoTable.finalY + 20,
+        startY: summaryStartY,   // IMPORTANT: Use corrected startY
         theme: "grid",
-        // ✅ GLOBAL STYLE (text stays black, border orange)
+        showHead: "everyPage",
+
         styles: {
           fontSize: 9,
           cellPadding: 4,
-          lineColor: BRAND,   // ✅ Border = orange
-          textColor: 0        // ✅ Body text = black
+          lineColor: BRAND,
+          textColor: 0,
         },
 
-        // ✅ Header styling (background = orange, text = white)
         headStyles: {
           fillColor: BRAND,
-          textColor: 255
+          textColor: 255,
+          minCellHeight: 20,
         },
 
-        // ✅ Align Amount column right
         columnStyles: {
-          1: { halign: "right" }
-        }
+          1: { halign: "right" },
+        },
       });
 
-      // ---- Notes ----
-      let noteY = doc.lastAutoTable.finalY + 35;
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const requiredHeight = 5 * 15 + 40; // 5 notes, each ~15px height + margin
 
-      // ✅ If notes overflow → add a new page
-      if (noteY + requiredHeight > pageHeight - 40) {
+
+      // ---------------------------
+      // NOTES
+      // ---------------------------
+      let noteY = doc.lastAutoTable.finalY + 35;
+      const noteHeight = 5 * 15 + 40;
+
+      if (noteY + noteHeight > pageHeight - 40) {
         doc.addPage();
         noteY = 40;
       }
@@ -476,16 +476,16 @@ const QuotationInvoice = () => {
         "2. 100% Payment for confirmation of event.",
         "3. Costing is merely for estimation purposes. Requirements are blocked post payment in full.",
         "4. If inventory is not reserved with payments, we are not committed to keep it.",
-        "5. The nature of the rental industry that our furniture is frequently moved and transported, which can lead to scratches on glass, minor chipping of paintwork, & minor stains etc. We ask you to visit the warehouse to inspect blocked furniture if you wish."
+        "5. The nature of the rental industry that our furniture is frequently moved and transported, which can lead to scratches on glass, minor chipping of paintwork, & minor stains etc. We ask you to visit the warehouse to inspect blocked furniture if you wish.",
       ];
 
-      const wrapWidth = 500; // pixels — fits inside A4 with left margin 40
       let currentY = noteY + 15;
+      const wrapWidth = 500;
 
       notes.forEach((line) => {
         const split = doc.splitTextToSize(line, wrapWidth);
         doc.text(split, 60, currentY);
-        currentY += split.length * 12; // add spacing based on wrapped lines
+        currentY += split.length * 12;
       });
 
 
@@ -497,7 +497,8 @@ const QuotationInvoice = () => {
         quotation?.executivename,
         quotation?.address,
         quotation?.clientName,
-      ])
+      ]);
+
       doc.save(filename);
     } catch (err) {
       console.error("PDF generation failed:", err);
