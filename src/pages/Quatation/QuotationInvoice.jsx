@@ -9,6 +9,7 @@ import { fmt, safeNumber } from "../../utils/numberUtils";
 import { parseDate } from "../../utils/parseDates";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { safeImageToBase64 } from "../../utils/createPdf";
 
 const BRAND = [189, 85, 37]; // #BD5525
 
@@ -179,52 +180,6 @@ const QuotationInvoice = () => {
     new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
   const money = (n) => `INR ${fmtIN(n)}`; // ✅ no font needed
 
-  async function compressImageToBase64(url, maxSize = 300, quality = 0.92) {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = URL.createObjectURL(blob);
-
-      return await new Promise((resolve) => {
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-
-          const scale = maxSize / Math.max(img.width, img.height);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          // 🎯 REMOVE BLACK BACKGROUND + KEEP PRODUCT
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-
-            // detect black background
-            if (r < 40 && g < 40 && b < 40) {
-              data[i + 3] = 0; // make transparent
-            }
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-
-          // 🔥 RETURN PNG WITH TRANSPARENCY
-          resolve(canvas.toDataURL("image/png"));
-        };
-      });
-    } catch (err) {
-      console.log("compress failed", err);
-      return null;
-    }
-  }
 
   function addFooter(doc) {
     const pages = doc.getNumberOfPages();
@@ -290,17 +245,21 @@ const QuotationInvoice = () => {
         },
       });
 
-
-      // ---- Images + Products ----
+      // --------------------------------------------------
+      // PRODUCT TABLE WITH NON-COMPRESSED PNG IMAGES
+      // --------------------------------------------------
       const rows = await Promise.all(
         items.map(async (p, i) => {
           const url = p.ProductIcon ? `${ImageApiURL}/product/${p.ProductIcon}` : null;
-          const img64 = url ? await compressImageToBase64(url, 300, 0.9) : null;
+          // const img64 = url ? await imageToBase64PNG(url) : null;
+          const img64 = url ? await safeImageToBase64(url, 80) : null;
+
+
           return [
             i + 1,
             p.productName,
             p.productSlot || quotation.quoteTime,
-            img64,
+            img64, // PNG image
             money(p.pricePerUnit || 0),
             p.quantity,
             p.days,
@@ -342,7 +301,7 @@ const QuotationInvoice = () => {
           0: { cellWidth: 25 },
           1: { cellWidth: 140 },
           2: { cellWidth: 95 },
-          3: { cellWidth: 65, halign: "center" },
+          3: { cellWidth: 65, halign: "center" }, // IMAGE CELL
           4: { cellWidth: 60 },
           5: { cellWidth: 35 },
           6: { cellWidth: 35 },
@@ -357,15 +316,13 @@ const QuotationInvoice = () => {
             data.cell.raw.startsWith("data:image")
           ) {
             const img = data.cell.raw;
-            const cellX = data.cell.x;
-            const cellY = data.cell.y;
-            const cellW = data.cell.width;
-            const cellH = data.cell.height;
-            const imgSize = 50;
-            const x = cellX + (cellW - imgSize) / 2;
-            const y = cellY + (cellH - imgSize) / 2;
+            const { x, y, width, height } = data.cell;
 
-            doc.addImage(img, "PNG", x, y, imgSize, imgSize);
+            const imgSize = 50;
+            const cx = x + (width - imgSize) / 2;
+            const cy = y + (height - imgSize) / 2;
+
+            doc.addImage(img, "PNG", cx, cy, imgSize, imgSize);
           }
         },
       });
