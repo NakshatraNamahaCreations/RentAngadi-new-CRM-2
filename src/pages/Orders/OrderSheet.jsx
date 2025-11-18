@@ -7,7 +7,7 @@ import { Container, Spinner, Button } from "react-bootstrap";
 import axios from "axios";
 // import { parseDate } from "../Quatation/QuotationDetails";
 import { parseDate } from "../../utils/parseDates";
-import { compressImageToBase64 } from "../../utils/createPdf";
+import { compressImageToBase64, safeImageToBase64 } from "../../utils/createPdf";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -95,6 +95,7 @@ const OrderSheet = () => {
     try {
       const doc = new jsPDF("p", "pt", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
       const margins = { left: 40, right: 40 };
       const usableWidth = pageWidth - margins.left - margins.right;
       let y = 40;
@@ -132,11 +133,11 @@ const OrderSheet = () => {
         },
       });
 
-      // --- Build product rows ---
+      // --- Build product rows with safeImageToBase64 ---
       const rows = await Promise.all(
         items.map(async (p, i) => {
           const url = p.ProductIcon ? `${ImageApiURL}/product/${p.ProductIcon}` : null;
-          const img64 = url ? await compressImageToBase64(url, 300, 0.9) : null;
+          const img64 = url ? await safeImageToBase64(url, 80) : null; // ✅ White BG, max 80px
           return [
             i + 1,
             p.productName,
@@ -193,14 +194,13 @@ const OrderSheet = () => {
             const imgSize = Math.min(width * 0.9, height * 0.9);
             const imgX = x + (width - imgSize) / 2;
             const imgY = y + (height - imgSize) / 2;
-            doc.addImage(img, "JPEG", imgX, imgY, imgSize, imgSize);
+            doc.addImage(img, "PNG", imgX, imgY, imgSize, imgSize); // PNG for white BG
           }
         },
       });
 
       // --- Notes ---
       let noteY = doc.lastAutoTable.finalY + 35;
-      const pageHeight = doc.internal.pageSize.getHeight();
       const notes = [
         "1. Additional elements would be charged on actuals, transportation would be additional.",
         "2. 100% Payment for confirmation of event.",
@@ -218,10 +218,9 @@ const OrderSheet = () => {
       doc.setFontSize(10);
       doc.text("Notes:", 40, noteY);
 
-      const wrapWidth = 500;
       let currentY = noteY + 15;
       notes.forEach((line) => {
-        const split = doc.splitTextToSize(line, wrapWidth);
+        const split = doc.splitTextToSize(line, 500);
         doc.text(split, 60, currentY);
         currentY += split.length * 12;
       });
