@@ -297,8 +297,9 @@ const AddProduct = () => {
       }
       setLoading(false);
     } catch (error) {
+      console.log("error: ", error?.response?.data?.message)
       setLoading(false);
-      toast.error("An error occurred while submitting the product");
+      toast.error(error?.response?.data?.message || error?.message || "An error occurred while submitting the product");
     }
   };
 
