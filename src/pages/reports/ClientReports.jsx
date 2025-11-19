@@ -189,7 +189,6 @@ const ClientReports = () => {
         }
       });
 
-      console.clear();
       console.log('selectedYear: ', selectedYear, "selected month: ", selectedMonth, 'Report Data:', response.data.orders);
 
       console.log(`clientReportByMonth response.data: `, response.data);

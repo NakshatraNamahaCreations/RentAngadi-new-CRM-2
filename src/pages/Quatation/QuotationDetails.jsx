@@ -430,12 +430,10 @@ const QuotationDetails = () => {
 
       // console.log("orderdetails config: ", orderDetails);
       // console.log("orderdetails config enough: ", orderDetails.slots[0].products[0]);
-      console.clear()
       console.log("orderdetails config enough: ", orderDetails.slots[0].products);
       console.log("product: ", productDates)
       console.log("items: ", items)
 
-      console.clear()
       console.log(`orderDetails: `, orderDetails.slots[0]);
 
       // Make the API call to create the order
@@ -1070,7 +1068,6 @@ const QuotationDetails = () => {
         slots: slotsPayload,
       };
 
-      console.clear();
       console.log("Submitting minimal quotation changes:", { ...payload, Products: payload?.slots[0]?.Products });
 
       const response = await axios.put(
@@ -1744,7 +1741,8 @@ const QuotationDetails = () => {
                         src={
                           item.image
                             ? `https://api.rentangadi.in/product/${item.image}`
-                            : "https://cdn-icons-png.flaticon.com/512/1532/1532801.png"
+                            // : "https://cdn-icons-png.flaticon.com/512/1532/1532801.png"
+                            : '/image.png'
                         }
                         alt="element"
                         style={{
